@@ -17,20 +17,8 @@ import {
   settings,
 } from "./schema";
 import { AUDIT_ACTIONS, SYSTEM_ACTOR, writeAudit } from "@/lib/audit";
+import { EDITABLE_LISTS } from "@/lib/lists";
 import { RUNNING_SERIAL_YEAR } from "@/lib/numbering";
-
-/** Dropdown lists that admins can edit. Payment Status, Charging Basis, Revenue Type and Currency are enums. */
-export const EDITABLE_LISTS = {
-  "Payment Channels": "Payment channels",
-  "Collecting Accounts": "Collecting accounts",
-  "Payer Categories": "Payer categories",
-  "Licence Status": "Licence status",
-  "Ogun State LGAs": "LGAs",
-  Frequency: "Frequency",
-  "Revenue Categories": "Revenue categories",
-} as const;
-
-export type ListName = (typeof EDITABLE_LISTS)[keyof typeof EDITABLE_LISTS];
 
 type Json = Record<string, unknown>;
 

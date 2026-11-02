@@ -1,16 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
 import { signInAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
+import { useFormAction } from "@/components/ui/use-form-action";
 import { describedBy, Field, FormMessage, Input } from "@/components/ui/field";
 
 export function SignInForm({ callbackUrl, notice }: { callbackUrl: string; notice?: string }) {
-  const [state, action, pending] = useActionState(signInAction, null);
+  const [state, action, pending] = useFormAction(signInAction);
   const errors = state && !state.ok ? state.fieldErrors : undefined;
 
   return (
-    <form action={action} className="mt-6 flex flex-col gap-4" noValidate>
+    <form onSubmit={action} className="mt-6 flex flex-col gap-4" noValidate>
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       {notice && !state && <FormMessage tone="success">{notice}</FormMessage>}
 

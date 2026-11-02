@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useEffect } from "react";
 import { changePasswordAction } from "@/app/actions/auth";
 import { signOutAction } from "@/app/actions/session";
 import { Button } from "@/components/ui/button";
+import { useFormAction } from "@/components/ui/use-form-action";
 import { describedBy, Field, FormMessage, Input } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
 import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 export function ChangePasswordForm({ forced }: { forced: boolean }) {
-  const [state, action, pending] = useActionState(changePasswordAction, null);
+  const [state, action, pending] = useFormAction(changePasswordAction);
   const errors = state && !state.ok ? state.fieldErrors : undefined;
   const router = useRouter();
   const toast = useToast();
@@ -28,7 +29,7 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
 
   return (
     <>
-      <form action={action} className="mt-6 flex flex-col gap-4" noValidate>
+      <form onSubmit={action} className="mt-6 flex flex-col gap-4" noValidate>
         <Field
           label={forced ? "Temporary password" : "Current password"}
           htmlFor="currentPassword"

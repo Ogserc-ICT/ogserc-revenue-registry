@@ -119,7 +119,7 @@ export const listMoveSchema = z.object({
 // ---------- Audit log filters ----------
 
 export const auditFilterSchema = z.object({
-  user: z.string().uuid().optional().catch(undefined),
+  user: z.union([z.string().uuid(), z.literal("system")]).optional().catch(undefined),
   action: z.string().max(80).optional().catch(undefined),
   from: z.string().refine(isIsoDate).optional().catch(undefined),
   to: z.string().refine(isIsoDate).optional().catch(undefined),

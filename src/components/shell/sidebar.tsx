@@ -119,26 +119,26 @@ function UserCard({ user, mode }: { user: ShellUser; mode: Mode }) {
         </div>
         <div
           className={cn(
-            "mt-3 flex items-center gap-1 text-sm",
+            "mt-3 flex items-center justify-between gap-1 text-xs",
             !full && "flex-col lg:flex-row",
           )}
         >
           <Link
             href="/change-password"
             title="Change password"
-            className="inline-flex h-8 items-center gap-1.5 rounded-control px-2 text-muted hover:bg-surface hover:text-text"
+            className="inline-flex h-8 items-center gap-1.5 rounded-control px-1.5 whitespace-nowrap text-muted hover:bg-surface hover:text-text"
           >
             <KeyRound aria-hidden className="size-3.5" />
-            <span className={cn(!full && "sr-only lg:not-sr-only")}>Change password</span>
+            <span className={cn("whitespace-nowrap", !full && "sr-only lg:not-sr-only lg:whitespace-nowrap")}>Change password</span>
           </Link>
           <form action={signOutAction}>
             <button
               type="submit"
               title="Sign out"
-              className="inline-flex h-8 items-center gap-1.5 rounded-control px-2 text-muted hover:bg-surface hover:text-text"
+              className="inline-flex h-8 items-center gap-1.5 rounded-control px-1.5 whitespace-nowrap text-muted hover:bg-surface hover:text-text"
             >
               <LogOut aria-hidden className="size-3.5" />
-              <span className={cn(!full && "sr-only lg:not-sr-only")}>Sign out</span>
+              <span className={cn("whitespace-nowrap", !full && "sr-only lg:not-sr-only lg:whitespace-nowrap")}>Sign out</span>
             </button>
           </form>
         </div>

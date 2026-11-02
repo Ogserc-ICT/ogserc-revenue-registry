@@ -17,22 +17,28 @@ import { createUserSchema } from "../src/lib/validation";
 
 config({ path: ".env.local" });
 
-function ask(question: string, { hidden = false } = {}): Promise<string> {
-  return new Promise((resolve) => {
-    const rl = createInterface({ input: stdin, output: stdout, terminal: true });
-    if (hidden) {
-      const rlAny = rl as unknown as { _writeToOutput: (s: string) => void };
-      rlAny._writeToOutput = (s: string) => {
-        if (s.startsWith(question)) stdout.write(question);
-        else if (s.includes("\n") || s.includes("\r")) stdout.write("\n");
-        else stdout.write("*".repeat(s.length));
-      };
-    }
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer);
-    });
-  });
+// One interface for every prompt, so piped input isn't lost between questions.
+const rl = createInterface({ input: stdin, output: stdout, terminal: stdin.isTTY ?? false });
+let masking = false;
+const rlOut = rl as unknown as { _writeToOutput: (s: string) => void };
+const writeOriginal = rlOut._writeToOutput?.bind(rl);
+rlOut._writeToOutput = (s: string) => {
+  if (!masking || !writeOriginal) return writeOriginal?.(s) ?? stdout.write(s);
+  // Echo the prompt and line breaks, mask everything typed.
+  if (/[\r\n]/.test(s)) stdout.write("\n");
+  else stdout.write("*".repeat(s.length));
+};
+
+// Lines are queued by the iterator, so input that arrives early (e.g. piped) is never dropped.
+const lines = rl[Symbol.asyncIterator]();
+
+async function ask(question: string, { hidden = false } = {}): Promise<string> {
+  stdout.write(question);
+  masking = hidden;
+  const next = await lines.next();
+  masking = false;
+  if (!stdin.isTTY) stdout.write("\n");
+  return next.done ? "" : next.value;
 }
 
 async function main() {
@@ -91,6 +97,7 @@ async function main() {
       console.log("It is shown once. You will be asked to change it when you first sign in.");
     }
   } finally {
+    rl.close();
     await client.end();
   }
 }

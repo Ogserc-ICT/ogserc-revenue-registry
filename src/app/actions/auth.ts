@@ -1,7 +1,8 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { headers } from "next/headers";
 import { AuthError } from "next-auth";
 import { signIn, unstable_update } from "@/auth";
 import { db } from "@/db";
@@ -11,16 +12,23 @@ import { AUDIT_ACTIONS, writeAudit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/session";
 import { changePasswordSchema, fieldErrors, signInSchema } from "@/lib/validation";
 
-/** Only same-site relative paths, so a crafted callbackUrl can't send users elsewhere. */
-function safeCallback(raw: FormDataEntryValue | null): string {
+/** Only this app's own paths, so a crafted callbackUrl can't send users to another site. */
+function safeCallback(raw: FormDataEntryValue | null, appOrigin: string): string {
   const value = typeof raw === "string" ? raw : "";
   try {
-    const url = new URL(value, "http://local");
-    if (url.origin !== "http://local" || url.pathname.startsWith("/sign-in")) return "/dashboard";
+    const url = new URL(value, appOrigin);
+    if (url.origin !== appOrigin || url.pathname.startsWith("/sign-in")) return "/dashboard";
     return `${url.pathname}${url.search}`;
   } catch {
     return "/dashboard";
   }
+}
+
+async function appOrigin(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  return host ? `${proto}://${host}` : new URL(process.env.AUTH_URL ?? "http://localhost:3100").origin;
 }
 
 export async function signInAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -31,8 +39,18 @@ export async function signInAction(_prev: ActionResult | null, formData: FormDat
   if (!parsed.success) {
     return { ok: false, error: "Check the highlighted fields.", fieldErrors: fieldErrors(parsed.error) };
   }
+  // A user on a temporary password goes straight to /change-password. This only decides where
+  // a *successful* sign-in lands; wrong credentials still fail below with the same message.
+  const [account] = await db
+    .select({ mustChangePassword: users.mustChangePassword })
+    .from(users)
+    .where(sql`lower(${users.email}) = ${parsed.data.email}`)
+    .limit(1);
+  const redirectTo = account?.mustChangePassword
+    ? "/change-password"
+    : safeCallback(formData.get("callbackUrl"), await appOrigin());
   try {
-    await signIn("credentials", { ...parsed.data, redirectTo: safeCallback(formData.get("callbackUrl")) });
+    await signIn("credentials", { ...parsed.data, redirectTo });
     return { ok: true };
   } catch (err) {
     if (err instanceof AuthError) {

@@ -19,6 +19,13 @@ function clientIp(request: Request | undefined): string | null {
 
 export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   ...authConfig,
+  logger: {
+    // A wrong password is expected, not a server error; it is recorded in sign_in_attempts.
+    error(error) {
+      if (error.name === "CredentialsSignin") return;
+      console.error(error);
+    },
+  },
   providers: [
     Credentials({
       credentials: { email: {}, password: {} },
