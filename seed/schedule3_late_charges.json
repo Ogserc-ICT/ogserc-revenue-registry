@@ -1,0 +1,29 @@
+[
+  {
+    "group": "LR-1",
+    "categories": "A, B, C, F and G",
+    "initial_ngn": 1000000,
+    "daily_ngn": 200000,
+    "daily_cap_ngn": 20000000,
+    "initial_code": "LRC-01",
+    "daily_code": "LRC-04"
+  },
+  {
+    "group": "LR-2",
+    "categories": "D, E, H and J",
+    "initial_ngn": 500000,
+    "daily_ngn": 100000,
+    "daily_cap_ngn": 10000000,
+    "initial_code": "LRC-02",
+    "daily_code": "LRC-05"
+  },
+  {
+    "group": "LR-3",
+    "categories": "K",
+    "initial_ngn": 100000,
+    "daily_ngn": 10000,
+    "daily_cap_ngn": 2000000,
+    "initial_code": "LRC-03",
+    "daily_code": "LRC-06"
+  }
+]

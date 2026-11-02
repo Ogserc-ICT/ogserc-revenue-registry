@@ -1,0 +1,404 @@
+{
+  "version": "Revenue Budget V2 (draft)",
+  "lines": [
+    {
+      "id": "BL-A1",
+      "line": "Legacy GenCos - operating levy",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Budget V2 MASTER row 5 'GENCOs' - no figures given."
+    },
+    {
+      "id": "BL-A2",
+      "line": "Legacy DisCos - operating levy",
+      "driver": "§2a Legacy DisCo drivers",
+      "total": 2626325875.87303,
+      "monthly": [
+        165000000,
+        173250000,
+        181912500,
+        191008125,
+        200558531.25,
+        210586457.8125,
+        221115780.703125,
+        232171569.738281,
+        243780148.225195,
+        255969155.636455,
+        268767613.418278,
+        282205994.089192
+      ],
+      "note": "1.5% x DisCo monthly revenue. Olumo from Budget V2; Ikeja and Eko have no revenue base in the source."
+    },
+    {
+      "id": "BL-A3",
+      "line": "Captive Power Plants (CPP)",
+      "driver": "§2b CPP plan",
+      "total": 600200000,
+      "monthly": [
+        0,
+        0,
+        2200000,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        196000000,
+        201000000,
+        201000000
+      ],
+      "note": "Budget V2 'CPPs': application fees, licence fees, fines."
+    },
+    {
+      "id": "BL-A4",
+      "line": "Independent GenCos - operating fee",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Budget V2 MASTER row 11 - no figures given."
+    },
+    {
+      "id": "BL-A5",
+      "line": "Independent DisCos - operating fee",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Budget V2 MASTER row 12 - no figures given."
+    },
+    {
+      "id": "BL-A6",
+      "line": "Off-grid / mini-grid IPPs - 1.5% operational charges",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Budget V2 'LEGACY DISCOs' row 9 (1.5% from off-grid IPPs) - blank in source."
+    },
+    {
+      "id": "BL-A7",
+      "line": "Meter Service Providers registration",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Budget V2 MASTER row 13 - no figures given. Schedule 3 Cat. H fee is ₦250,000 per MSP."
+    },
+    {
+      "id": "BL-B1",
+      "line": "Multilateral / donor agency funding",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Budget V2 MASTER row 18 / 'LEGACY DISCOs' row 11 - no figures given."
+    },
+    {
+      "id": "BL-C1",
+      "line": "Registration fees (Schedule 3, Part A)",
+      "driver": "§2d Registration pipeline",
+      "total": 11000000,
+      "monthly": [
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667,
+        916666.666666667
+      ],
+      "note": "From Payers columns S-U: Schedule 3 fee x expected month (Even = spread over 12 months)."
+    },
+    {
+      "id": "BL-C2",
+      "line": "Late registration administrative charges (Schedule 3, Part B)",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Not in Budget V2. Use the Registration Fees calculator to size it."
+    },
+    {
+      "id": "BL-C3",
+      "line": "Licence application & processing fees",
+      "driver": "§2c Pre-existing licensees",
+      "total": 93000000,
+      "monthly": [
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000,
+        7750000
+      ],
+      "note": "Budget V2 'PRE-EXISTING LICENSEES': number of licensees x ₦1m processing fee."
+    },
+    {
+      "id": "BL-C4",
+      "line": "Licence & regularisation fees",
+      "driver": "§2c Pre-existing licensees",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Regularisation fees - excluded unless the switch in §2c is Yes."
+    },
+    {
+      "id": "BL-C5",
+      "line": "Renewal, extension & amendment fees",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": null
+    },
+    {
+      "id": "BL-C6",
+      "line": "CAPMI registration",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Budget V2 MASTER row 23 'CAPMI REGISTRATION' - XXX in source."
+    },
+    {
+      "id": "BL-D1",
+      "line": "Approvals, permits & other registrations",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Not in Budget V2."
+    },
+    {
+      "id": "BL-D2",
+      "line": "Fines, penalties & surcharges",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Not in Budget V2 (LEGACY DISCOs 'Fines' row is blank)."
+    },
+    {
+      "id": "BL-D3",
+      "line": "Dispute resolution fees",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Not in Budget V2."
+    },
+    {
+      "id": "BL-D4",
+      "line": "Other income",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Not in Budget V2."
+    },
+    {
+      "id": "BL-D5",
+      "line": "State Government subvention",
+      "driver": "Input",
+      "total": 0,
+      "monthly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "Not in Budget V2."
+    }
+  ]
+}

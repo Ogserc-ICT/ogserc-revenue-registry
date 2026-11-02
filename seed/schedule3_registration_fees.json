@@ -1,0 +1,90 @@
+[
+  {
+    "category": "A",
+    "registrant": "Successor distribution companies, including a multi-State licensee that is a successor distribution company, for all their activities in Ogun State",
+    "fee_ngn": 1000000,
+    "late_group": "LR-1",
+    "revenue_code": "REG-A",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "B",
+    "registrant": "Integrated utilities, for all their activities in Ogun State",
+    "fee_ngn": 1000000,
+    "late_group": "LR-1",
+    "revenue_code": "REG-B",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "C",
+    "registrant": "Generation of 10 MW or more, whether for sale or captive use",
+    "fee_ngn": 500000,
+    "late_group": "LR-1",
+    "revenue_code": "REG-C",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "D",
+    "registrant": "Generation of 1 MW to less than 10 MW, whether for sale or captive use",
+    "fee_ngn": 300000,
+    "late_group": "LR-2",
+    "revenue_code": "REG-D",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "E",
+    "registrant": "Mini-grids and interconnected mini-grids",
+    "fee_ngn": 250000,
+    "late_group": "LR-2",
+    "revenue_code": "REG-E",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "F",
+    "registrant": "Distribution licensees other than successor distribution companies; trading and bulk supply",
+    "fee_ngn": 500000,
+    "late_group": "LR-1",
+    "revenue_code": "REG-F",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "G",
+    "registrant": "Private, estate and industrial-park networks",
+    "fee_ngn": 500000,
+    "late_group": "LR-1",
+    "revenue_code": "REG-G",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "H",
+    "registrant": "Metering service providers",
+    "fee_ngn": 250000,
+    "late_group": "LR-2",
+    "revenue_code": "REG-H",
+    "budget_line": "BL-A7"
+  },
+  {
+    "category": "I",
+    "registrant": "Own-use generation notification under paragraph 3(4) (200 kW to below 1 MW)",
+    "fee_ngn": 100000,
+    "late_group": "Not listed",
+    "revenue_code": "REG-I",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "J",
+    "registrant": "Franchisees and sub-franchisees",
+    "fee_ngn": 250000,
+    "late_group": "LR-2",
+    "revenue_code": "REG-J",
+    "budget_line": "BL-C1"
+  },
+  {
+    "category": "K",
+    "registrant": "Any other activity below 1 MW (except household usage)",
+    "fee_ngn": 100000,
+    "late_group": "LR-3",
+    "revenue_code": "REG-K",
+    "budget_line": "BL-C1"
+  }
+]
