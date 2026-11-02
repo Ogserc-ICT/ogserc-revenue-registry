@@ -1,0 +1,1 @@
+ALTER TABLE "licence_fee_bands" ALTER COLUMN "published_rate" DROP NOT NULL;
