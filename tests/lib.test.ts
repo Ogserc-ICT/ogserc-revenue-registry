@@ -124,7 +124,7 @@ describe("settings validation and diff", () => {
   });
   it("records only changed fields with old and new values", () => {
     const d = diffFields(
-      { usdNgnRate: "1500.000000", asAtDate: "2026-11-02", orgName: "A" },
+      { usdNgnRate: "1500.000000", asAtDate: "2026-11-02" as string | null, orgName: "A" },
       { usdNgnRate: "1500", asAtDate: null, orgName: "B" },
     );
     expect(d).toEqual({

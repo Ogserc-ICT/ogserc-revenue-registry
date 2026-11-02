@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+/* Dark mode is driven by next-themes adding `.dark` to <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- DESIGN.md section 1: colour tokens ---------- */
+
+:root {
+  /* Light mode surfaces */
+  --bg: #f4f8f5;
+  --surface: #ffffff;
+  --surface-raised: #eef4f0;
+  --border: #d5e3da;
+  --text: #0b1f15;
+  --text-muted: #4f6a5b;
+
+  /* Brand and status (same in both modes) */
+  --emerald-900: #185b39;
+  --emerald-600: #1ea066;
+  --emerald-400: #3fd08a;
+  --gold-400: #ffe27a;
+  --gold-500: #fdcd0a;
+  --gold-700: #e29a06;
+  --amber: #f5b83d;
+  --rose: #f0616d;
+  --sky: #5ab0f0;
+  --slate: #6b7c74;
+
+  /* Text on the brand gradient (DESIGN.md: dark text, never white) */
+  --on-brand: #03140b;
+
+  /*
+   * Status colours used as *text*. In light mode the bright tokens fail WCAG AA on white,
+   * so they are darkened from the same token (DESIGN.md 7: AA contrast floor).
+   * Gold text in light mode uses --gold-700, as DESIGN.md specifies.
+   */
+  --gold-text: var(--gold-700);
+  --emerald-text: var(--emerald-900);
+  --rose-text: color-mix(in oklab, var(--rose) 62%, black);
+  --amber-text: color-mix(in oklab, var(--amber) 50%, black);
+  --sky-text: color-mix(in oklab, var(--sky) 60%, black);
+
+  /* Focus ring glow */
+  --focus-glow: 0 0 0 4px rgb(63 208 138 / 0.15);
+  /* Light mode allows one soft shadow, on popovers only */
+  --popover-shadow: 0 8px 24px rgb(11 31 21 / 0.12);
+
+  /* ---------- The only four gradients ---------- */
+  --grad-brand: linear-gradient(135deg, #185b39 0%, #1ea066 55%, #3fd08a 100%);
+  --grad-gold-text: linear-gradient(180deg, #ffe27a 0%, #fdcd0a 45%, #e29a06 100%);
+  --grad-signature:
+    radial-gradient(120% 140% at 0% 0%, rgb(30 160 102 / 0.35) 0%, transparent 55%),
+    radial-gradient(90% 120% at 100% 100%, rgb(253 205 10 / 0.18) 0%, transparent 60%), var(--surface);
+  --grad-page-glow: radial-gradient(60% 50% at 0% 0%, rgb(30 160 102 / 0.1), transparent 70%);
+
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #06110c;
+  --surface: #0b1913;
+  --surface-raised: #10221a;
+  --border: #1b3226;
+  --text: #e7f2ec;
+  --text-muted: #8ea99a;
+
+  --gold-text: var(--gold-500);
+  --emerald-text: var(--emerald-400);
+  --rose-text: var(--rose);
+  --amber-text: var(--amber);
+  --sky-text: var(--sky);
+
+  /* No drop shadows in dark mode */
+  --popover-shadow: none;
+
+  color-scheme: dark;
+}
+
+/* ---------- Tailwind theme mapping (no raw hex in components) ---------- */
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-emerald-900: var(--emerald-900);
+  --color-emerald-600: var(--emerald-600);
+  --color-emerald-400: var(--emerald-400);
+  --color-gold-400: var(--gold-400);
+  --color-gold-500: var(--gold-500);
+  --color-gold-700: var(--gold-700);
+  --color-amber: var(--amber);
+  --color-rose: var(--rose);
+  --color-sky: var(--sky);
+  --color-slate: var(--slate);
+  --color-on-brand: var(--on-brand);
+  --color-gold-text: var(--gold-text);
+  --color-emerald-text: var(--emerald-text);
+  --color-rose-text: var(--rose-text);
+  --color-amber-text: var(--amber-text);
+  --color-sky-text: var(--sky-text);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* DESIGN.md type scale: 12 13 14 16 20 24 32 44 */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-signature: 44px;
+
+  /* DESIGN.md radius hierarchy */
+  --radius-shell: 18px;
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
+
+  --shadow-focus: var(--focus-glow);
+  --shadow-popover: var(--popover-shadow);
+}
+
+/* ---------- Base ---------- */
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible focus on every interactive element */
+:focus-visible {
+  outline: 2px solid var(--emerald-400);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgb(63 208 138 / 0.3);
+}
+
+@layer utilities {
+  .bg-grad-brand {
+    background-image: var(--grad-brand);
+  }
+  .bg-grad-signature {
+    background: var(--grad-signature);
+  }
+  .bg-page-glow {
+    background: var(--grad-page-glow);
+  }
+  .text-grad-gold {
+    background-image: var(--grad-gold-text);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  .money {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Inputs: raised fill, hairline border, emerald ring + soft glow on focus */
+  .field-control {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    color: var(--text);
+    transition:
+      border-color 120ms ease,
+      box-shadow 120ms ease;
+  }
+  .field-control:focus,
+  .field-control:focus-visible {
+    outline: none;
+    border-color: var(--emerald-400);
+    box-shadow:
+      0 0 0 1px var(--emerald-400),
+      var(--focus-glow);
+  }
+  .field-control[aria-invalid="true"] {
+    border-color: var(--rose);
+  }
+  .field-control::placeholder {
+    color: var(--text-muted);
+    opacity: 0.8;
+  }
+}
+
+/* Skeleton shimmer, 1.6s, on the raised surface */
+@keyframes ogsrr-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+  animation: ogsrr-shimmer 1.6s ease-in-out infinite;
+}
+
+/* Toasts slide up and fade in over 200ms */
+@keyframes ogsrr-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.toast-in {
+  animation: ogsrr-toast-in 200ms ease-out;
+}
+
+/* DESIGN.md 5: reduced motion sets every duration to 0 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
