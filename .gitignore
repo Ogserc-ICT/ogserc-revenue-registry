@@ -11,3 +11,6 @@ playwright-report/
 screenshots/
 .DS_Store
 *.log
+
+# The source workbook holds licensee financial data; keep it out of git
+*.xlsm
