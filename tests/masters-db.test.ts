@@ -16,7 +16,14 @@ import {
   updateSchedule3Fee,
   updateSchedule3Group,
 } from "@/lib/fees-service";
-import { createPayer, getPayerSummary, listPayers, NearDuplicateError, updatePayer } from "@/lib/payers-service";
+import {
+  createPayer,
+  getPayerSummary,
+  listPayerNotices,
+  listPayers,
+  NearDuplicateError,
+  updatePayer,
+} from "@/lib/payers-service";
 import { payerFilterSchema, payerSchema, type PayerValues } from "@/lib/validation";
 import { createTestDb } from "./helpers/db";
 
@@ -77,6 +84,16 @@ describe("payer derived fields (BUILD_SPEC 4.6)", () => {
     expect(new Decimal(ibedc!.totalPaid).toFixed(2)).toBe("46000000.00");
     const govt = await getPayerSummary(db, "OGS-P-0010");
     expect(new Decimal(govt!.totalPaid).toFixed(2)).toBe("50000000.00");
+  });
+
+  it("shows each notice's own confirmed paid-to-date (DN-0001: billed 60m, paid 45m)", async () => {
+    const notices = await listPayerNotices(db, "OGS-P-0001");
+    const dn1 = notices.find((n) => n.dnNo === "OGSERC/DN/2026/0001")!;
+    expect(new Decimal(dn1.amountBilled).toFixed(2)).toBe("60000000.00");
+    expect(new Decimal(dn1.paid).toFixed(2)).toBe("45000000.00");
+    // Each notice only counts receipts against itself.
+    const others = notices.filter((n) => n.dnNo !== dn1.dnNo);
+    expect(others.every((n) => new Decimal(n.paid).lte(n.amountBilled))).toBe(true);
   });
 
   it("derives the registration status from Schedule 3", async () => {

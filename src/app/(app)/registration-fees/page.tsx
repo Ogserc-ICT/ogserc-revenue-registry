@@ -57,7 +57,12 @@ export default async function RegistrationFeesPage() {
       mobile: true,
       cell: (r) => <span className="text-sm">{r.lateGroup ?? <span className="text-muted">None</span>}</span>,
     },
-    { key: "code", header: "Code", mobile: true, cell: (r) => <span className="money text-sm">{r.revenueCode}</span> },
+    {
+      key: "code",
+      header: "Code",
+      mobile: true,
+      cell: (r) => <span className="money text-sm whitespace-nowrap">{r.revenueCode}</span>,
+    },
     {
       key: "payers",
       header: "Payers",

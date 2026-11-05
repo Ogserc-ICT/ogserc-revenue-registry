@@ -183,6 +183,42 @@ export async function getPayerSummary(db: Db, payerId: string): Promise<PayerSum
   return row ? normaliseSummary(row) : null;
 }
 
+export interface PayerNotice {
+  dnNo: string;
+  issueDate: string;
+  revenueCode: string;
+  revenueHead: string;
+  amountBilled: string;
+  cancelled: boolean;
+  /** Confirmed receipts against this notice. */
+  paid: string;
+}
+
+/** A payer's latest demand notices with confirmed paid-to-date (BUILD_SPEC 4.5). */
+export async function listPayerNotices(db: Db, payerId: string, limit = 10): Promise<PayerNotice[]> {
+  const dnPaid = db
+    .select({ dnNo: receipts.dnNo, paid: sql<string>`sum(${receipts.amountPaid})`.as("dn_paid") })
+    .from(receipts)
+    .where(and(eq(receipts.status, "Confirmed"), eq(receipts.payerId, payerId), isNotNull(receipts.dnNo)))
+    .groupBy(receipts.dnNo)
+    .as("dnpaid");
+  return db
+    .select({
+      dnNo: demandNotices.dnNo,
+      issueDate: demandNotices.issueDate,
+      revenueCode: demandNotices.revenueCode,
+      revenueHead: demandNotices.revenueHead,
+      amountBilled: demandNotices.amountBilled,
+      cancelled: demandNotices.cancelled,
+      paid: sql<string>`coalesce(${dnPaid.paid}, 0)`,
+    })
+    .from(demandNotices)
+    .leftJoin(dnPaid, eq(dnPaid.dnNo, demandNotices.dnNo))
+    .where(eq(demandNotices.payerId, payerId))
+    .orderBy(sql`${demandNotices.issueDate} desc`, sql`${demandNotices.dnNo} desc`)
+    .limit(limit);
+}
+
 function normaliseSummary(
   r: Omit<PayerSummary, "openNotices"> & { openNotices: number | string; totalCount?: number | string },
 ): PayerSummary {

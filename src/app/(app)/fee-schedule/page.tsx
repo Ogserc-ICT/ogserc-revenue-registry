@@ -110,7 +110,7 @@ export default async function FeeSchedulePage({ searchParams }: { searchParams: 
       mobile: true,
       cell: (r) =>
         r.rateStatus ? (
-          <StatusPill tone={r.rateStatus === "Approved" || r.rateStatus === "Per Schedule 3" ? "emerald" : /draft|placeholder|not set/i.test(r.rateStatus) ? "amber" : "muted"}>
+          <StatusPill wrap tone={r.rateStatus === "Approved" || r.rateStatus === "Per Schedule 3" ? "emerald" : /draft|placeholder|not set/i.test(r.rateStatus) ? "amber" : "muted"}>
             {r.rateStatus}
           </StatusPill>
         ) : (

@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { type Column, DataTable } from "@/components/ui/data-table";
 import { Card, Naira, PageHeader } from "@/components/ui/misc";
 import { db } from "@/db";
-import { budgetCellValue, MONTH_LABELS, sumAmounts } from "@/lib/budget";
+import { MONTH_LABELS, sumAmounts } from "@/lib/budget";
 import { type BudgetLineRow, getBudget } from "@/lib/fees-service";
 import { abbreviateNaira, formatAmount } from "@/lib/money";
 import { can } from "@/lib/permissions";
@@ -45,8 +45,22 @@ export default async function RevenueBudgetPage({ searchParams }: { searchParams
             <span className="money mr-2">{r.id}</span>
             {r.name}
           </p>
+          {canEdit && (
+            <div className="-ml-3 mt-1">
+              <EditBudgetLineButton financialYear={fy} lineId={r.id} lineName={r.name} months={r.months} />
+            </div>
+          )}
         </div>
       ),
+    },
+    // The total sits before the months so it stays in view when the months scroll sideways.
+    {
+      key: "total",
+      header: `FY${fy}`,
+      align: "right",
+      mobile: true,
+      className: "whitespace-nowrap",
+      cell: (r) => <Naira value={formatAmount(sumAmounts(r.months))} className="font-medium" />,
     },
     ...MONTH_LABELS.map(
       (m, i): Column<BudgetLineRow> => ({
@@ -57,30 +71,6 @@ export default async function RevenueBudgetPage({ searchParams }: { searchParams
         cell: (r) => <span className={isZero(r.months[i]) ? "text-muted" : undefined}>{shortAmount(r.months[i])}</span>,
       }),
     ),
-    {
-      key: "total",
-      header: `FY${fy}`,
-      align: "right",
-      mobile: true,
-      cell: (r) => <Naira value={formatAmount(sumAmounts(r.months))} className="font-medium" />,
-    },
-    ...(canEdit
-      ? [
-          {
-            key: "edit",
-            header: "",
-            mobile: true,
-            cell: (r: BudgetLineRow) => (
-              <EditBudgetLineButton
-                financialYear={fy}
-                lineId={r.id}
-                lineName={r.name}
-                months={r.months.map((v) => budgetCellValue(v))}
-              />
-            ),
-          } satisfies Column<BudgetLineRow>,
-        ]
-      : []),
   ];
 
   return (

@@ -8,8 +8,8 @@ import { describedBy, Field, FormMessage, Input } from "@/components/ui/field";
 import { Naira } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
-import { MONTH_LABELS, parseBudgetInput, sumAmounts } from "@/lib/budget";
-import { formatAmount } from "@/lib/money";
+import { budgetCellValue, MONTH_LABELS, parseBudgetInput, sumAmounts } from "@/lib/budget";
+import { formatAmount, toDecimal } from "@/lib/money";
 import { saveBudgetLineAction } from "./actions";
 
 export function EditBudgetLineButton({
@@ -21,7 +21,7 @@ export function EditBudgetLineButton({
   financialYear: number;
   lineId: string;
   lineName: string;
-  /** Jan..Dec at 2 dp. */
+  /** Jan..Dec as stored (full precision). The fields show them at 2 dp. */
   months: string[];
 }) {
   const [open, setOpen] = useState(false);
@@ -64,7 +64,7 @@ function BudgetForm({
 }) {
   const [state, action, pending] = useFormAction(saveBudgetLineAction);
   const toast = useToast();
-  const [values, setValues] = useState(months);
+  const [values, setValues] = useState(() => months.map((m) => budgetCellValue(m)));
   const e = state && !state.ok ? state.fieldErrors : undefined;
 
   useEffect(() => {
@@ -76,7 +76,10 @@ function BudgetForm({
 
   const parsed = values.map(parseBudgetInput);
   const invalid = parsed.some((p) => p === null);
-  const total = sumAmounts(parsed.map((p) => p ?? "0"));
+  // Same rule as the save: a month left at its 2 dp value keeps its exact stored figure.
+  const total = sumAmounts(
+    parsed.map((p, i) => (p !== null && toDecimal(p).eq(toDecimal(months[i]).toDecimalPlaces(2)) ? months[i] : (p ?? "0"))),
+  );
 
   return (
     <form onSubmit={action} className="flex flex-col gap-5" noValidate>

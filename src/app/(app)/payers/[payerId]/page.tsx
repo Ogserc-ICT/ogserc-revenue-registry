@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -8,11 +8,11 @@ import { ButtonLink } from "@/components/ui/button";
 import { type Column, DataTable } from "@/components/ui/data-table";
 import { Card, Naira, PageHeader, SectionHeading, StatusPill } from "@/components/ui/misc";
 import { db } from "@/db";
-import { demandNotices, receipts } from "@/db/schema";
+import { receipts } from "@/db/schema";
 import { formatDate } from "@/lib/dates";
 import { formatPlain } from "@/lib/fees";
 import { formatAmount } from "@/lib/money";
-import { getPayerSummary } from "@/lib/payers-service";
+import { getPayerSummary, listPayerNotices } from "@/lib/payers-service";
 import { can } from "@/lib/permissions";
 import { gatePage } from "@/lib/session";
 
@@ -28,23 +28,8 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
   const p = await getPayerSummary(db, payerId);
   if (!p) notFound();
 
-  const paidOnDn = sql<string>`coalesce((select sum(${receipts.amountPaid}) from ${receipts}
-    where ${receipts.dnNo} = ${demandNotices.dnNo} and ${receipts.status} = 'Confirmed'), 0)`;
   const [notices, recentReceipts] = await Promise.all([
-    db
-      .select({
-        dnNo: demandNotices.dnNo,
-        issueDate: demandNotices.issueDate,
-        revenueCode: demandNotices.revenueCode,
-        revenueHead: demandNotices.revenueHead,
-        amountBilled: demandNotices.amountBilled,
-        cancelled: demandNotices.cancelled,
-        paid: paidOnDn,
-      })
-      .from(demandNotices)
-      .where(eq(demandNotices.payerId, payerId))
-      .orderBy(desc(demandNotices.issueDate), desc(demandNotices.dnNo))
-      .limit(RECENT),
+    listPayerNotices(db, payerId, RECENT),
     db
       .select({
         receiptNo: receipts.receiptNo,
@@ -55,7 +40,7 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
         status: receipts.status,
       })
       .from(receipts)
-      .where(and(eq(receipts.payerId, payerId)))
+      .where(eq(receipts.payerId, payerId))
       .orderBy(desc(receipts.receiptDate), desc(receipts.receiptNo))
       .limit(RECENT),
   ]);

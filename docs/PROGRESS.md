@@ -141,7 +141,7 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
-## Phase 2: Masters (built, browser checks pending, awaiting review)
+## Phase 2: Masters (complete, awaiting review)
 
 Built 5 Nov 2026.
 
@@ -181,10 +181,23 @@ Built 5 Nov 2026.
 - `useFormAction` now sends the pressed submit button's name and value.
 
 ### Checks run
-- `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: 58 pass (31 new). `pnpm build`: succeeds, all routes compile.
+- `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: 59 pass (32 new). `pnpm build`: succeeds, all routes compile (run before the last three UI fixes below, which typecheck and lint clean).
 - Unit tests: the kickoff checks (Cat F, 30 Jun → 31 Jul 2026 = 31 days, ₦7,700,000; "CCETC Taihu Distribution Ltd" warns about "CCETC TAIHU"), both BUILD_SPEC 4.6 name examples, cap and Category I rules, registration status order, rate descriptions, budget parsing and change detection, months elapsed.
 - Database tests on the sample seed: payer totals match the workbook (billed ₦88,550,000.00; outstanding ₦31,050,000.00 across 4 open notices; confirmed ₦111,100,000.00); IBEDC and Ogun State Government figures; registration filter; search and paging; payer add (OGS-P-0047, audited, near-duplicate confirm recorded); list validation; edit audit and deactivation; rename to an existing name refused; fee head audit; Schedule 3 heads keep their rate; Schedule 3 copy-through; band rate edit; budget saves only changed months and keeps the FY total exact; a new year's budget.
-- Not yet run: the `pnpm screens` browser pass (dark/light, 375/1440) and clicking through as each role. It needs a test login; see the notes for the reviewer.
+- `pnpm screens`: all 72 combinations (18 screens × 2 themes × 2 widths) have no browser errors and no horizontal overflow.
+- Browser click-through against the dev database (24 checks, all pass), with no lasting data changes:
+  - calculator: Cat F, 30 Jun → 31 Jul 2026 shows 31 days and ₦7,700,000.00;
+  - "CCETC Taihu Distribution Ltd" shows the Possible duplicate warning and saves nothing until confirmed; "ccetc taihu" is blocked on the name field;
+  - payer detail: DN-0001 paid ₦45,000,000.00;
+  - unchanged saves on payer, fee head, budget line and Schedule 3 forms report "No changes to save";
+  - REG-F rate locked; LEV-01 rate shown as 1.5 (%); GEN-02 11–50 MW US$30,000 = ₦45,000,000.00; budget line and FY totals exact;
+  - as a Viewer: Payers and the editors show no access, and no Edit or Add buttons appear.
+- Found and fixed during the browser pass:
+  - payer detail: each notice's Paid showed the payer's total confirmed against all notices (a correlated subquery lost its table names). Now a joined subquery in `listPayerNotices`, with a test for DN-0001;
+  - Fee schedule at 375px: long rate status pills overflowed; `StatusPill` has a `wrap` option for long free-text statuses;
+  - Revenue budget dialog total summed the 2 dp cells and drifted by kobo; it now uses the stored figure for untouched months, as the save does. The line's FY total and Edit button now sit next to its name, so they stay in view while months scroll sideways;
+  - Registration fees: the Code column no longer wraps.
+- The Phase 1 QA accounts were reactivated with new passwords for these checks and deactivated again afterwards (both audited).
 
 ### Decisions
 | Decision | Why |
