@@ -27,7 +27,10 @@ export const AUDIT_ACTIONS = {
   dnCancelled: "Demand notice cancelled",
   payerAdded: "Payer added",
   payerEdited: "Payer edited",
+  feeHeadAdded: "Fee head added",
   feeHeadChanged: "Fee head changed",
+  schedule3Changed: "Schedule 3 rate changed",
+  licenceBandChanged: "Licence fee band changed",
   budgetChanged: "Budget changed",
   exported: "Export",
 } as const;

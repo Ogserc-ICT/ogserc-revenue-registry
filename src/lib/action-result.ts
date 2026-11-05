@@ -1,6 +1,11 @@
 import { ZodError } from "zod";
-import { ActionAuthError } from "./session";
 import { fieldErrors } from "./validation";
+
+/**
+ * Signed out, temporary password not yet changed, or missing a capability. Lives here (not in
+ * session.ts) so domain services can share these error types without importing server-only.
+ */
+export class ActionAuthError extends Error {}
 
 /** Shape every server action returns to its form. */
 export type ActionResult<T = undefined> =

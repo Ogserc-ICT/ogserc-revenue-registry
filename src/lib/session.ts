@@ -5,6 +5,7 @@ import { cache } from "react";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { type Role, users } from "@/db/schema";
+import { ActionAuthError } from "./action-result";
 import type { AuditActor } from "./audit";
 import { type Capability, can } from "./permissions";
 
@@ -45,7 +46,7 @@ export async function gatePage(
   return { ok: can(user.roles, capability), user };
 }
 
-export class ActionAuthError extends Error {}
+export { ActionAuthError };
 
 /**
  * For server actions. Throws if the user is signed out, must change their password, or

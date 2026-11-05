@@ -24,6 +24,16 @@ const DEFAULT_ROUTES = [
   "/audit-log",
   "/register",
   "/change-password",
+  // Phase 2
+  "/payers",
+  "/payers/new",
+  "/payers/OGS-P-0001",
+  "/payers/OGS-P-0001/edit",
+  "/fee-schedule",
+  "/fee-schedule/GEN-02/edit",
+  "/registration-fees",
+  "/licence-fee-tables",
+  "/revenue-budget",
 ];
 const WIDTHS = [375, 1440];
 const THEMES = ["dark", "light"] as const;

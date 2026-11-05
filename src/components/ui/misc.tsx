@@ -23,15 +23,25 @@ const tint: Record<PillTone, string> = {
 };
 
 /** Status pill: a coloured dot plus text, so colour never carries status on its own. */
-export function StatusPill({ tone, children }: { tone: PillTone; children: React.ReactNode }) {
+export function StatusPill({
+  tone,
+  wrap = false,
+  children,
+}: {
+  tone: PillTone;
+  /** For long free-text statuses: lets the text wrap on narrow screens instead of overflowing. */
+  wrap?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap text-text",
+        "inline-flex items-center gap-1.5 border px-2.5 py-0.5 text-xs font-medium text-text",
+        wrap ? "max-w-full rounded-control whitespace-normal" : "rounded-pill whitespace-nowrap",
         tint[tone],
       )}
     >
-      <span aria-hidden className={cn("size-1.5 rounded-pill", dot[tone])} />
+      <span aria-hidden className={cn("size-1.5 shrink-0 rounded-pill", dot[tone])} />
       {children}
     </span>
   );
