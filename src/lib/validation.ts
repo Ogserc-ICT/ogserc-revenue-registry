@@ -116,6 +116,157 @@ export const listMoveSchema = z.object({
   direction: z.enum(["up", "down"]),
 });
 
+// ---------- Shared field helpers (forms send strings) ----------
+
+const blankToNull = (v: string) => (v === "" ? null : v);
+
+const optionalText = (max: number) => trimmed(max).transform(blankToNull);
+
+/**
+ * An optional decimal typed by a person: commas and spaces are ignored. `dp` is the most
+ * decimal places accepted. Blank becomes null.
+ */
+export const optionalDecimal = (label: string, dp: number, opts: { positive?: boolean } = {}) =>
+  z
+    .string()
+    .transform((v) => v.replace(/[,\s₦$]/g, ""))
+    .refine(
+      (v) => v === "" || new RegExp(`^\\d+(\\.\\d{1,${dp}})?$`).test(v),
+      dp === 0
+        ? `Enter the ${label} as a whole number, without minus signs.`
+        : `Enter the ${label} as a number with up to ${dp} decimal places, e.g. 1500 or 1500.50.`,
+    )
+    .refine((v) => !opts.positive || v === "" || Number(v) > 0, `The ${label} must be above 0.`)
+    .transform(blankToNull);
+
+const requiredDecimal = (label: string, dp: number, opts: { positive?: boolean } = {}) =>
+  optionalDecimal(label, dp, opts).refine((v) => v !== null, `Enter the ${label}.`);
+
+const optionalDate = (label: string) =>
+  z
+    .string()
+    .trim()
+    .refine((v) => v === "" || isIsoDate(v), `Pick a valid ${label}, or leave it blank.`)
+    .transform(blankToNull);
+
+// ---------- Payers ----------
+
+export const SCH3_CATEGORY_VALUES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
+export const EXPECTED_REG_MONTHS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "Even"] as const;
+
+export const payerSchema = z.object({
+  name: required("payer name", 200),
+  category: optionalText(120),
+  licenceNo: optionalText(60),
+  licenceStatus: optionalText(60),
+  capacityMw: optionalDecimal("capacity in MW", 3),
+  revenueBaseNgn: optionalDecimal("revenue base", 2),
+  lga: optionalText(80),
+  address: optionalText(300),
+  contactPerson: optionalText(120),
+  phone: optionalText(40),
+  email: trimmed(200)
+    .refine((v) => v === "" || z.string().email().safeParse(v).success, "Enter a valid email address, or leave it blank.")
+    .transform((v) => (v === "" ? null : v.toLowerCase())),
+  dateRegistered: optionalDate("registration date"),
+  sch3Category: z
+    .string()
+    .transform(blankToNull)
+    .refine((v) => v === null || (SCH3_CATEGORY_VALUES as readonly string[]).includes(v), "Pick a Schedule 3 category."),
+  expectedRegMonth: z
+    .string()
+    .transform(blankToNull)
+    .refine((v) => v === null || (EXPECTED_REG_MONTHS as readonly string[]).includes(v), "Pick a month or Even."),
+  notes: optionalText(1000),
+});
+
+export type PayerValues = z.output<typeof payerSchema>;
+
+export const payerFilterSchema = z.object({
+  q: z.string().trim().max(100).optional().catch(undefined),
+  category: z.string().max(120).optional().catch(undefined),
+  reg: z.enum(["Fee not set", "Registered", "Part-paid", "Not registered"]).optional().catch(undefined),
+  sch3: z.union([z.enum(SCH3_CATEGORY_VALUES), z.literal("none")]).optional().catch(undefined),
+  show: z.enum(["active", "inactive", "all"]).default("active").catch("active"),
+  page: z.coerce.number().int().min(1).default(1).catch(1),
+});
+
+export type PayerFilters = z.output<typeof payerFilterSchema>;
+
+// ---------- Fee schedule ----------
+
+export const feeHeadSchema = z
+  .object({
+    head: required("revenue head", 200),
+    category: required("revenue category", 120),
+    appliesTo: optionalText(300),
+    basis: z.enum(["Fixed", "Per MW", "MW Band", "% of Revenue", "Per Unit", "Per Day", "Variable"], {
+      message: "Pick a charging basis.",
+    }),
+    currency: z.enum(["NGN", "USD"], { message: "Pick a currency." }),
+    /** For "% of Revenue" this is the percentage (1.5 = 1.5%); the action converts it. */
+    publishedRate: optionalDecimal("rate", 6),
+    publishedRateText: optionalText(200),
+    capNgn: optionalDecimal("daily cap", 2),
+    unitBasis: optionalText(200),
+    frequency: optionalText(60),
+    revenueType: z.enum(["IGR", "Non-IGR"], { message: "Pick IGR or Non-IGR." }),
+    budgetLineId: optionalText(20),
+    legalBasis: optionalText(300),
+    ncoaCode: optionalText(40),
+    rateStatus: optionalText(120),
+    notes: optionalText(1000),
+    active: z.boolean(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.basis === "% of Revenue" && v.publishedRate !== null && Number(v.publishedRate) > 100) {
+      ctx.addIssue({ code: "custom", path: ["publishedRate"], message: "Enter a percentage of 100 or less." });
+    }
+    if (v.basis === "% of Revenue" && v.currency !== "NGN") {
+      ctx.addIssue({ code: "custom", path: ["currency"], message: "A % of revenue fee is charged in naira." });
+    }
+  });
+
+export type FeeHeadValues = z.output<typeof feeHeadSchema>;
+
+export const feeCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z0-9]+(-[A-Z0-9]+)*$/, "Use capital letters, numbers and hyphens only, e.g. APP-11.")
+  .max(20, "Keep the code under 20 characters.");
+
+export const sch3FeeSchema = z.object({
+  category: z.enum(SCH3_CATEGORY_VALUES),
+  feeNgn: requiredDecimal("registration fee", 2, { positive: true }),
+});
+
+export const sch3GroupSchema = z.object({
+  group: z.string().trim().regex(/^LR-\d$/),
+  initialNgn: requiredDecimal("initial charge", 2),
+  dailyNgn: requiredDecimal("daily charge", 2),
+  dailyCapNgn: requiredDecimal("daily charges cap", 2),
+});
+
+export const bandRateSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  publishedRate: optionalDecimal("rate", 2),
+});
+
+export const lateCalcSchema = z.object({
+  category: z.enum(SCH3_CATEGORY_VALUES),
+  deadline: z.string().refine(isIsoDate),
+  assessed: z.string().refine(isIsoDate),
+});
+
+// ---------- Revenue budget ----------
+
+export const budgetLineEditSchema = z.object({
+  financialYear: z.coerce.number().int().min(2000).max(2100),
+  budgetLineId: z.string().trim().min(1).max(20),
+  months: z.array(requiredDecimal("amount", 2)).length(12),
+});
+
 // ---------- Audit log filters ----------
 
 export const auditFilterSchema = z.object({

@@ -133,17 +133,68 @@ Completed 2 Nov 2026.
 - The dev database is seeded **with** sample data.
 - The "N" badge in the bottom-left corner of dev screenshots is Next's development indicator. It does not appear in production builds.
 
-### What's next: Phase 2 (Masters)
-- Payers list, add and edit, with the near-duplicate name warning (BUILD_SPEC 4.6). It uses `allocateSerial(tx, "payer")`.
-- Fee Schedule view and editor (Admin), with old/new audit.
-- Registration Fees: the Schedule 3 Part A and Part B tables, and the late registration calculator (Cat F, 30 Jun → 31 Jul 2026 = ₦7,700,000).
-- Licence Fee Tables.
-- Revenue Budget editor.
+### What's next
+Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billing) follows review.
 
 ### Open policy decisions still with the Head of Finance (BUILD_SPEC 9)
 - 2: revenue recognition date (receipt date for now).
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
+
+## Phase 2: Masters (built, browser checks pending, awaiting review)
+
+Built 5 Nov 2026.
+
+### What was built
+
+**Payers** (`/payers`, `/payers/new`, `/payers/[id]`, `/payers/[id]/edit`)
+- List with server-side search (name, payer ID, licence no.), filters (category, Schedule 3 category, registration status, active/inactive/all) and pagination (25 a page). The total comes from a `count(*) over ()` column, so each page is one query.
+- Derived figures per BUILD_SPEC 4.6, computed on read in SQL: confirmed paid (all years), billed (not cancelled), outstanding (per-notice `MAX(0, billed − confirmed paid)`), open notices, Schedule 3 fee, registration paid (`REG-{category}`) and registration status.
+- Add and edit share one form. The payer ID is allocated with `allocateSerial` in the same transaction as the insert and the audit entry; the form previews the next ID.
+- Name checks (`src/lib/payer-names.ts`): an exact case-insensitive match is blocked (the unique index is the backstop, and a concurrent duplicate gets a friendly message). A near match warns and lists the similar payers; the officer must press "It's a different payer" to save, and the audit entry records the names they confirmed.
+- Category, licence status and LGA must be active list values; a value that was later deactivated is kept on edit.
+- Edits audit only changed fields, old → new. Payers are deactivated (Active tick box), never deleted.
+- Detail page: the four figures, every field, and the latest 10 notices and receipts.
+
+**Fee schedule** (`/fee-schedule`, `/fee-schedule/new`, `/fee-schedule/[code]/edit`)
+- All heads grouped by category, with a rate description (`describeRate`), basis, frequency, rate status, type and budget line, and confirmed FY collected per head with share of FY (receipt date, FY chip year).
+- Admin can add and edit heads. Codes can't change. The form shows only the fields that fit the basis (rate hidden for MW Band and Variable, cap only for Per Day). % of Revenue rates are typed as a percentage and stored as a fraction (1.5 → 0.015).
+- Every change is audited with old and new values. Receipts and notices keep their own snapshots, so history is not rewritten.
+
+**Registration fees** (`/registration-fees`)
+- Schedule 3 Part A and Part B tables with active payer counts and confirmed FY amounts.
+- Late registration calculator (`lateRegistration` in `src/lib/registration.ts`): days late, fee, charge group, initial charge, daily charges = MIN(days × daily, cap), total admin charges, total payable. Category I has no late charge.
+- Admin can edit a Part A fee or a Part B group. The save copies the amounts into the linked REG/LRC fee heads in the same transaction, with one audit entry.
+
+**Licence fee tables** (`/licence-fee-tables`)
+- The 76 bands grouped by fee code, with a picker per code, the naira equivalent of US$ bands at the Settings rate, and "No rate: use an override" for bands without one.
+- Admin can edit or clear a band rate, audited.
+
+**Revenue budget** (`/revenue-budget`)
+- Lines × months for the FY chip year, grouped A–D with subtotals, monthly totals and the FY total.
+- Admin edits one line at a time in a dialog with a live total. Only months whose 2 dp value changed are written, so the workbook's full-precision figures (and the ₦3,330,525,875.87 total) stay exact. `?fy=` opens a year with no budget yet (the "FY2027 budget" button).
+
+**Shared**
+- Domain logic in `src/lib`: `payer-names.ts`, `registration.ts`, `budget.ts` (including `monthsElapsed` for Phase 5), `fees.ts` (pure); `payers-service.ts` and `fees-service.ts` (database work, taking the `Db` so tests run them on PGlite).
+- New audit actions: Fee head added, Schedule 3 rate changed, Licence fee band changed (Payer added/edited, Fee head changed and Budget changed already existed).
+- `ActionAuthError` moved into `action-result.ts` (re-exported from `session.ts`), so services can use the error types without importing `server-only`.
+- `useFormAction` now sends the pressed submit button's name and value.
+
+### Checks run
+- `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: 58 pass (31 new). `pnpm build`: succeeds, all routes compile.
+- Unit tests: the kickoff checks (Cat F, 30 Jun → 31 Jul 2026 = 31 days, ₦7,700,000; "CCETC Taihu Distribution Ltd" warns about "CCETC TAIHU"), both BUILD_SPEC 4.6 name examples, cap and Category I rules, registration status order, rate descriptions, budget parsing and change detection, months elapsed.
+- Database tests on the sample seed: payer totals match the workbook (billed ₦88,550,000.00; outstanding ₦31,050,000.00 across 4 open notices; confirmed ₦111,100,000.00); IBEDC and Ogun State Government figures; registration filter; search and paging; payer add (OGS-P-0047, audited, near-duplicate confirm recorded); list validation; edit audit and deactivation; rename to an existing name refused; fee head audit; Schedule 3 heads keep their rate; Schedule 3 copy-through; band rate edit; budget saves only changed months and keeps the FY total exact; a new year's budget.
+- Not yet run: the `pnpm screens` browser pass (dark/light, 375/1440) and clicking through as each role. It needs a test login; see the notes for the reviewer.
+
+### Decisions
+| Decision | Why |
+|---|---|
+| Schedule 3 is the source for the REG-A..K and LRC-01..06 rates. They are edited on Registration fees and copied into the fee heads on save; in the fee head editor their basis, currency, rate and cap are locked | BUILD_SPEC 3 allows linking or copying; copying keeps the amount engine simple, and locking stops the two from disagreeing. |
+| Near-duplicate rule: same words after removing case, punctuation and words like Limited/Ltd/Plc/Nigeria/Company; or every word of a 2+ word name inside the other; or one or two letters apart | Flags both BUILD_SPEC examples and only 3 other pairs in the seed, all CCETC TAIHU variants. It only warns, so a false alarm costs one click. |
+| Payer category, licence status and LGA are checked against the active list values on the server | CLAUDE.md rule 10: the dropdown alone is not validation. |
+| Registration status pills: Registered emerald, Part-paid gold, Not registered muted, Fee not set slate | DESIGN.md doesn't list these; chosen to match the demand notice colours (Paid emerald, Part-paid gold). |
+| The late calculator's deadline starts blank and the assessment date starts at the as-at date | The spec gives no default deadline; a guessed one could be mistaken for the statutory date. |
+| Fee schedule shares are of total confirmed FY revenue by receipt date | BUILD_SPEC 4.7 and 4.9. |
 
 ## Pre-Phase 2 housekeeping (5 Nov 2026)
 
