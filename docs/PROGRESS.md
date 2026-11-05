@@ -144,4 +144,17 @@ Completed 2 Nov 2026.
 - 2: revenue recognition date (receipt date for now).
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
-- 6: rate-change approval.
+
+## Pre-Phase 2 housekeeping (5 Nov 2026)
+
+### Decisions
+| Decision | Why |
+|---|---|
+| Rate changes (open decision 6): an Admin edits fee head rates directly, with no second approver. Every change is audited with old and new values | Agreed. A second-approver step can be added later without changing the data model. |
+| The repo and folder keep the name `ogserc-revenue-registry`, although BUILD_SPEC 12 says `ogserc-revenue-register` | Agreed. The package name, product name and number formats are unchanged. The Vercel project name is decided in Phase 6. |
+| The Neon dev database is named `neondb` (Neon's default). The production database will be created as `ogserc_revenue` in Phase 6 | The dev database is already in its own Neon project, which is what BUILD_SPEC 12 requires. |
+
+### Environment
+- Local secrets live in `.env.local`, which the scripts and `drizzle.config.ts` load. A file named `.env` is not read by `pnpm db:migrate`, `pnpm seed` or `pnpm create-admin`.
+- `corepack enable` was run on the dev machine, so `pnpm` (10.11.0, from `packageManager`) is on PATH.
+- Checked: lint, typecheck and the 27 tests pass; migrations are up to date on the dev database; the dev server serves `/sign-in` and redirects signed-out requests to it.
