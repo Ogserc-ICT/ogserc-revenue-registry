@@ -156,6 +156,6 @@ Completed 2 Nov 2026.
 
 ### Environment
 - Local secrets live in `.env.local`, which the scripts and `drizzle.config.ts` load. A file named `.env` is not read by `pnpm db:migrate`, `pnpm seed` or `pnpm create-admin`.
-- The first real Admin (`rev@oserc.com`) was created with `pnpm create-admin` and has signed in. The Phase 1 test Admin `qa.admin@ogsrr.test` is now deactivated (audited as "User deactivated"), so the dev database has one active user.
+- A temporary Admin (`rev@oserc.com`) was created with `pnpm create-admin` and has signed in. It is a test account: once the owner creates the proper Admin, deactivate it (users are deactivated, not deleted, so the audit history keeps its link). The Phase 1 test Admin `qa.admin@ogsrr.test` is now deactivated (audited as "User deactivated"), so the dev database has one active user.
 - `corepack enable` was run on the dev machine, so `pnpm` (10.11.0, from `packageManager`) is on PATH.
 - Checked: lint, typecheck and the 27 tests pass; migrations are up to date on the dev database; the dev server serves `/sign-in` and redirects signed-out requests to it.
