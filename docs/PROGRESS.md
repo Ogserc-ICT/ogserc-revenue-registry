@@ -141,7 +141,7 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
-## Phase 4: Receipts (built, browser checks pending)
+## Phase 4: Receipts (complete, awaiting review)
 
 Built 9 Nov 2026. As in Phase 3, the rules come from the workbook's New Receipt and Receipt sheets and the VBA (`SaveReceiptCore`, `ConfirmSelected`, `ReverseSelected`).
 
@@ -172,7 +172,21 @@ Payer pages get "Record receipt" and receipt links; notice pages get "Record rec
 - Database tests on the sample seed: 17 receipts (16 live, 1 reversed), 2 pending worth ₦7,750,000, confirmed ₦111,100,000; every problem listed at once; snapshots, numbering and audit; duplicate RRR blocked in any case without using a number; notice balance as amount due; notice not found / other payer; head mismatch needs confirmation; overpayment of a notice reported; auto-confirm; **self-confirmation blocked**; confirm skips non-pending; a confirmed receipt reduces its notice's balance; reverse with a reason drops out of totals and frees the ref (both receipts then show red); edit by the recorder only, before confirmation, in the same year.
 - Unit tests: receipt quantity hints, check line, form status order.
 - Pending and reversed receipt PDFs rendered from the dev database and inspected (watermarks, banner, words).
-- Pending: `pnpm screens` and a browser click-through.
+- `pnpm screens` (production build): all 92 combinations (23 screens × 2 themes × 2 widths) have no browser errors and no horizontal overflow.
+- Browser click-through, 33 checks, all pass, no page errors. With the owner's agreement it recorded three test receipts (payment refs `QA-P4-…`) and reversed all three at the end:
+  - form: status line order, receipt hint wording, REG-F due ₦500,000.00, check line for part payment, over-payment and match, next number;
+  - save → receipt page, Pending; no Confirm button on your own receipt, with the reason; Edit and Reverse for the recorder;
+  - duplicate RRR typed in a different case: caught live, Save disabled, the field names the receipt that has it;
+  - edit by the recorder (amount paid, remarks) saved;
+  - `?dn=` starts with the payer and notice; the amount due is the notice's balance (₦15,000,000.00); a different head is warned on the form and needs "It's the right notice: save";
+  - Save & print → official receipt with PROVISIONAL, amount in words, white in dark mode; PDF download;
+  - Register Pending only; bulk bar shows Confirm 0 (disabled) for your own receipts; reverse needs a reason; "3 receipts reversed."; struck through; reversed receipt prints REVERSED;
+  - Viewer: register without checkboxes, no New receipt, no Confirm/Reverse/Edit, can download the PDF.
+- Data after the checks: the sample figures are unchanged (17 sample receipts; 2 pending, ₦7,750,000.00; confirmed ₦111,100,000.00; 7 notices). The three test receipts are Reversed and count nowhere; they used receipt numbers 00018-00020.
+- Not exercised in the browser: a successful **confirm** (and its animation). The QA Admin can't confirm its own receipts and the sample receipts must stay as they are for the Phase 5 acceptance checks. Confirming is covered by the database tests; the animation needs a second Finance user to see in the browser.
+
+### Note for Phase 5
+The dev Register now shows 20 rows (4 reversed) rather than the workbook's 17. Every revenue figure is unaffected because reversed receipts count nowhere, and the acceptance tests run on a fresh seed. "Receipts recorded (FY)" on the Dashboard still excludes reversed receipts (16).
 
 ### Decisions
 | Decision | Why |
