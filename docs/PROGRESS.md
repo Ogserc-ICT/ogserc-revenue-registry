@@ -141,6 +141,66 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
+## Phase 5: Reports (built, browser checks pending)
+
+Built 9 Nov 2026. Report rules checked against the workbook's Dashboard, Budget vs Actual, Monthly Summary, Arrears and Bank Recon formulas.
+
+### BUILD_SPEC 10 acceptance checks
+Every row of the acceptance table is an automated test (`tests/acceptance.test.ts`, fresh seed with sample data, as at 2 Nov 2026, FY 2026). **All pass.**
+
+| Figure | Expected | Result |
+|---|---|---|
+| Confirmed revenue FY2026 | ₦111,100,000.00 (IGR ₦61,100,000 · Non-IGR ₦50,000,000) | Pass |
+| Pending confirmation | ₦7,750,000.00 across 2 receipts | Pass |
+| Receipts recorded (FY) | 16 on the Dashboard + 1 reversed = 17 rows | Pass |
+| DNs billed (not cancelled) | ₦88,550,000.00 | Pass |
+| DN outstanding | ₦31,050,000.00 across 4 open notices | Pass |
+| Over 90 days | ₦31,000,000.00 across 3 notices; 31-60 days ₦50,000 | Pass |
+| DN collection rate | 64.94% | Pass |
+| Annual budget | ₦3,330,525,875.87 | Pass |
+| Budget to date (11 months) | ₦2,838,653,215.12 | Pass |
+| Achieved vs budget to date | 3.91% | Pass |
+| Achieved vs FY budget | 3.34% | Pass |
+| Top payers | Ogun State Government ₦50m; IBEDC ₦46m; EKEDC ₦10m | Pass |
+| DN-0001 (IBEDC) | ₦60m billed, ₦45m paid, ₦15m outstanding, 261 days, Part-paid (overdue) | Pass |
+| Bank Recon, TSA – Remita | Feb per register ₦41,000,000; FY total ₦117,750,000 | Pass |
+| Budget vs Actual BL-A2 | budget to date ₦2,344,119,881.78, actual ₦55,000,000, Behind budget | Pass |
+| Amount calc EMG-01, 1.5 MW | ₦50,000 (band rate) | Pass |
+| Amount calc GEN-02, 25 MW | ₦45,000,000 (US$30,000 @ ₦1,500) | Pass |
+| Late reg calc, Cat F, 31 days | ₦7,700,000 total payable | Pass |
+
+Plus: Monthly Summary reconciles (categories = heads) and totals ₦111,100,000; Arrears' all-payers row matches the Dashboard; "completed months only" gives 10 months.
+
+### What was built
+- **Reports service** (`src/lib/reports-service.ts`): every report figure, with decimal.js. Revenue = Confirmed receipts by receipt date; Bank Recon = not Reversed, by value date.
+- **Dashboard**: the signature card (the only gradient background: confirmed FY figure in gold, IGR/Non-IGR bar, progress against the full-year budget with a gold marker at budget to date, both percentages labelled as BUILD_SPEC 4.8 requires); pending and outstanding cards; Over 90 days (rose), Receipts (FY) with reversed count, collection rate, annual budget; collections vs phased budget chart (Recharts, emerald gradient bars, dashed gold budget line, "Show as table"); Needs attention (pending older than 3 days, notices over 90 days, payers with no Schedule 3 category, unbudgeted receipts, receipts with no budget line, or "Nothing needs attention."); top 5 payers; demand notice ageing with share; revenue by category.
+- **Budget vs Actual**: by line (status in the BUILD_SPEC 4.8 order), by group, total, confirmed actual by month, and the "every receipt maps to a budget line" check. Uses the Settings budget-to-date rule.
+- **Monthly Summary**: head × month matrix grouped by category with subtotals, IGR and Non-IGR, total, phased budget row, share of FY and the reconciliation check. Shows heads with collections by default, with a link to show all.
+- **Arrears**: per payer billed, paid vs notices, outstanding, five ageing buckets, open notices, collection rate, with the all-payers total first.
+- **Bank Recon**: month × collecting account (register, statement, difference). Finance/Admin click a statement figure to enter, change or clear it (audited: "Bank statement total entered"). Non-zero differences highlighted. Footer: pending receipts to confirm.
+- **Excel exports** (`/export/<name>.xlsx`, exceljs): Register and Demand notices (with the current filters), Budget vs Actual, Monthly Summary, Arrears, Bank Recon, and Export everything (Admin; every table, no password hashes). Each checks the role on the server and writes an "Export" audit entry.
+- **Data import & export** (`/admin/data`): Export everything, and payer import from CSV (BUILD_SPEC 6) with a template, a dry-run preview (the real import run inside a transaction and rolled back, so it shows the exact payer IDs, errors and duplicates, including duplicates within the file), near duplicates only when ticked, and an all-or-nothing import. Each payer added is audited with `source: CSV import`.
+
+### Checks run
+- `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: 131 pass (26 new: 19 acceptance, 7 recon/import/csv). `pnpm build`: succeeds.
+- Pending: `pnpm screens` and a browser click-through.
+
+### Decisions
+| Decision | Why |
+|---|---|
+| Totals add exact budget figures and round once | Adding line totals already rounded to kobo gave ₦2,838,653,215.11 instead of the workbook's .12. |
+| Pending, outstanding, over 90 days and the collection rate cover all notices and receipts, not just the FY | The workbook's Dashboard formulas aren't filtered by year for these. |
+| Reports use the FY chosen in the top bar's FY chip (default: Settings financial year) | Lets management look at another year without changing Settings. |
+| "Pending receipts older than 3 days" is measured from the receipt date to the as-at date | Business dates use the as-at date throughout. |
+| Recharts 3.10.1, exceljs 4.4.0, react-is 19.3.1, pinned | BUILD_SPEC 1 names Recharts and exceljs; react-is is Recharts' peer for React 19. |
+| Chart values are numbers for drawing only; tables and tooltips show the exact figures | Recharts plots numbers. Money is never computed from them. |
+| Excel money cells are numbers formatted #,##0.00 | So totals can be summed in Excel; 2 dp values at these sizes are exact in a spreadsheet. |
+| The Dashboard's other cards don't fade in | A pure-CSS fade would run on every visit, and DESIGN.md wants the first-load moment once per session. The count-up and bar fill do run once per session. |
+| Report matrices (Budget vs Actual, Monthly Summary, Bank Recon) scroll sideways on phones instead of becoming cards | They are grids of months; the Arrears table becomes cards. |
+
+### Notes
+- **Correction to the Phase 3 note:** `pnpm add` on this machine leaves `node_modules` half-linked even with the dev server stopped (it happened again here). After adding a package, run a clean `pnpm install --frozen-lockfile` (delete `node_modules` and `.next` first), then build.
+
 ## Phase 4: Receipts (complete, awaiting review)
 
 Built 9 Nov 2026. As in Phase 3, the rules come from the workbook's New Receipt and Receipt sheets and the VBA (`SaveReceiptCore`, `ConfirmSelected`, `ReverseSelected`).
@@ -264,7 +324,7 @@ The workbook (`OGSERC_Revenue_Register_FMS_v2.xlsm`, git-ignored) is now in the 
 | `@react-pdf/renderer` pinned at 4.3.0 | Known-good with React 19. |
 
 ### Notes
-- Install packages only with the dev server stopped. Adding the PDF library while it ran left `node_modules` half-linked on Windows, which broke `pnpm build` with "Cannot read properties of null (reading 'useContext')". A clean `pnpm install --frozen-lockfile` fixed it.
+- After adding the PDF library, `node_modules` was left half-linked, which broke `pnpm build` with "Cannot read properties of null (reading 'useContext')". A clean `pnpm install --frozen-lockfile` fixed it. (Phase 5 showed the dev server wasn't the cause; see the Phase 5 notes.)
 
 ## Phase 2: Masters (complete, awaiting review)
 
