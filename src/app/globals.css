@@ -318,3 +318,15 @@ body {
     opacity: 0.7;
   }
 }
+
+/* ---------- Dashboard signature figure (DESIGN.md 1 and 3) ---------- */
+/* Gold gradient text in dark mode; in light mode gold text uses --gold-700 for contrast. */
+.signature-figure {
+  color: var(--gold-text);
+}
+.dark .signature-figure {
+  background-image: var(--grad-gold-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

@@ -342,6 +342,16 @@ export const receiptFilterSchema = z.object({
 
 export type ReceiptFilters = z.output<typeof receiptFilterSchema>;
 
+// ---------- Bank recon ----------
+
+export const statementTotalSchema = z.object({
+  financialYear: z.coerce.number().int().min(2000).max(2100),
+  month: z.coerce.number().int().min(1).max(12),
+  collectingAccount: z.string().trim().min(1).max(120),
+  /** Blank clears the entry. */
+  statementTotal: optionalDecimal("statement total", 2),
+});
+
 // ---------- Revenue budget ----------
 
 export const budgetLineEditSchema = z.object({

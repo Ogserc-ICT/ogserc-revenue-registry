@@ -1,5 +1,5 @@
 import { asc, eq } from "drizzle-orm";
-import { Plus, ReceiptText } from "lucide-react";
+import { Download, Plus, ReceiptText } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NoAccess } from "@/components/placeholder-page";
@@ -76,11 +76,16 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
         title="Register"
         description="Every receipt recorded. Finance confirms receipts against the bank or TSA statement; only confirmed receipts count as revenue."
         actions={
-          canRecord ? (
-            <ButtonLink href="/new-receipt">
-              <Plus aria-hidden className="size-4" /> New receipt
+          <>
+            <ButtonLink href={`/export/register.xlsx${keep({}).replace("/register", "")}`} variant="secondary" prefetch={false}>
+              <Download aria-hidden className="size-4" /> Excel
             </ButtonLink>
-          ) : undefined
+            {canRecord && (
+              <ButtonLink href="/new-receipt">
+                <Plus aria-hidden className="size-4" /> New receipt
+              </ButtonLink>
+            )}
+          </>
         }
       />
 

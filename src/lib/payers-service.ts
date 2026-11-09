@@ -297,7 +297,7 @@ export async function createPayer(
   db: Db,
   actor: AuditActor,
   values: PayerValues,
-  opts: { acknowledgeNearDuplicates: boolean },
+  opts: { acknowledgeNearDuplicates: boolean; source?: string },
 ): Promise<{ payerId: string; name: string }> {
   return db.transaction(async (tx) => {
     await assertListValues(tx, values);
@@ -320,6 +320,7 @@ export async function createPayer(
         category: values.category,
         sch3Category: values.sch3Category,
         ...(near.length ? { similarNamesConfirmed: near.map((n) => `${n.payerId} ${n.name}`) } : {}),
+        ...(opts.source ? { source: opts.source } : {}),
       },
     });
     return { payerId, name: values.name };
