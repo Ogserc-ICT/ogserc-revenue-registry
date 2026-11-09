@@ -184,6 +184,7 @@ export async function getPayerSummary(db: Db, payerId: string): Promise<PayerSum
 }
 
 export interface PayerNotice {
+  id: string;
   dnNo: string;
   issueDate: string;
   revenueCode: string;
@@ -204,6 +205,7 @@ export async function listPayerNotices(db: Db, payerId: string, limit = 10): Pro
     .as("dnpaid");
   return db
     .select({
+      id: demandNotices.id,
       dnNo: demandNotices.dnNo,
       issueDate: demandNotices.issueDate,
       revenueCode: demandNotices.revenueCode,

@@ -259,6 +259,46 @@ export const lateCalcSchema = z.object({
   assessed: z.string().refine(isIsoDate),
 });
 
+// ---------- Demand notices ----------
+
+export const issueDnSchema = z.object({
+  payerId: z.string().trim().min(1, "Select the payer.").max(40),
+  feeCode: z.string().trim().min(1, "Select the revenue head.").max(20),
+  issueDate: z.string().trim().refine(isIsoDate, "Issue date is missing or invalid."),
+  period: optionalText(120),
+  quantity: optionalDecimal("basis quantity", 4).transform((v) => v ?? "0"),
+  override: optionalDecimal("override amount", 2, { positive: true }),
+  paymentTermsDays: z.coerce
+    .number({ message: "Enter the payment terms in days." })
+    .int("Enter a whole number of days.")
+    .min(0, "Payment terms cannot be negative.")
+    .max(365, "Use 365 days or fewer."),
+  remarks: optionalText(500),
+});
+
+export type IssueDnValues = z.output<typeof issueDnSchema>;
+
+export const cancelDnSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, "Select the demand notices to cancel.").max(200),
+  reason: z.string().trim().min(3, "Give the reason for cancelling.").max(500, "Keep the reason under 500 characters."),
+});
+
+export const DN_STATUS_FILTERS = ["open", "Unpaid", "Part-paid", "Overdue", "Part-paid (overdue)", "Paid", "Cancelled"] as const;
+export const DN_BUCKET_FILTERS = ["Not yet due", "1-30 days", "31-60 days", "61-90 days", "Over 90 days", "Settled", "Cancelled"] as const;
+
+export const dnFilterSchema = z.object({
+  q: z.string().trim().max(100).optional().catch(undefined),
+  status: z.enum(DN_STATUS_FILTERS).optional().catch(undefined),
+  bucket: z.enum(DN_BUCKET_FILTERS).optional().catch(undefined),
+  payer: z.string().trim().max(40).optional().catch(undefined),
+  code: z.string().trim().max(20).optional().catch(undefined),
+  from: z.string().refine(isIsoDate).optional().catch(undefined),
+  to: z.string().refine(isIsoDate).optional().catch(undefined),
+  page: z.coerce.number().int().min(1).default(1).catch(1),
+});
+
+export type DnFilters = z.output<typeof dnFilterSchema>;
+
 // ---------- Revenue budget ----------
 
 export const budgetLineEditSchema = z.object({

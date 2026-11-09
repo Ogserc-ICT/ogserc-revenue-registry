@@ -34,6 +34,10 @@ const DEFAULT_ROUTES = [
   "/registration-fees",
   "/licence-fee-tables",
   "/revenue-budget",
+  // Phase 3
+  "/new-demand-notice",
+  "/demand-notices",
+  "/demand-notices?status=open",
 ];
 const WIDTHS = [375, 1440];
 const THEMES = ["dark", "light"] as const;
