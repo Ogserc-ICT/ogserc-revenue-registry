@@ -59,7 +59,7 @@ export function DnTable({ rows, canCancel }: { rows: DnTableRow[]; canCancel: bo
       header: "Payer",
       mobile: true,
       cell: (r) => (
-        <div className="min-w-32">
+        <div className="min-w-28">
           <p>{r.payerName}</p>
           <p className="money text-sm text-muted">{r.payerId}</p>
         </div>
@@ -70,7 +70,7 @@ export function DnTable({ rows, canCancel }: { rows: DnTableRow[]; canCancel: bo
       header: "Revenue head",
       mobile: true,
       cell: (r) => (
-        <div className="min-w-32">
+        <div className="min-w-28">
           <p className="money text-sm font-medium">{r.revenueCode}</p>
           <p className="text-sm text-muted">{r.revenueHead}</p>
         </div>
@@ -103,8 +103,8 @@ export function DnTable({ rows, canCancel }: { rows: DnTableRow[]; canCancel: bo
       header: "Due",
       mobile: true,
       cell: (r) => (
-        <div className="whitespace-nowrap">
-          <p className="text-sm">{r.dueDate ? formatDate(r.dueDate) : "—"}</p>
+        <div className="min-w-24">
+          <p className="text-sm whitespace-nowrap">{r.dueDate ? formatDate(r.dueDate) : "—"}</p>
           <p className={r.daysOverdue > 90 ? "text-sm text-rose-text" : "text-sm text-muted"}>
             {r.daysOverdue > 0 ? `${r.daysOverdue} days overdue` : r.agingBucket === "Not yet due" ? "Not yet due" : ""}
           </p>

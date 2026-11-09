@@ -1,5 +1,5 @@
 import { asc, eq } from "drizzle-orm";
-import { FileText, Plus } from "lucide-react";
+import { Download, FileText, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NoAccess } from "@/components/placeholder-page";
@@ -79,11 +79,16 @@ export default async function DemandNoticesPage({ searchParams }: { searchParams
         title="Demand notices"
         description={`Every notice issued, with what has been paid against it and how overdue it is, as at ${formatDate(asAt)}.`}
         actions={
-          canIssue ? (
-            <ButtonLink href="/new-demand-notice">
-              <Plus aria-hidden className="size-4" /> Issue demand notice
+          <>
+            <ButtonLink href={`/export/demand-notices.xlsx${keep({}).replace("/demand-notices", "")}`} variant="secondary" prefetch={false}>
+              <Download aria-hidden className="size-4" /> Excel
             </ButtonLink>
-          ) : undefined
+            {canIssue && (
+              <ButtonLink href="/new-demand-notice">
+                <Plus aria-hidden className="size-4" /> Issue demand notice
+              </ButtonLink>
+            )}
+          </>
         }
       />
 

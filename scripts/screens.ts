@@ -41,6 +41,12 @@ const DEFAULT_ROUTES = [
   // Phase 4
   "/new-receipt",
   "/register?status=pending",
+  // Phase 5
+  "/budget-vs-actual",
+  "/monthly-summary",
+  "/arrears",
+  "/bank-recon",
+  "/admin/data",
 ];
 const WIDTHS = [375, 1440];
 const THEMES = ["dark", "light"] as const;

@@ -64,11 +64,8 @@ export interface ReceiptTotals {
 export const RECEIPTS_PAGE_SIZE = 25;
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
-export async function listReceipts(
-  db: Db,
-  f: ReceiptFilters,
-  pageSize = RECEIPTS_PAGE_SIZE,
-): Promise<{ rows: ReceiptRow[]; totals: ReceiptTotals }> {
+/** The Register's filters as a SQL condition (shared with the Excel export). */
+export function receiptWhere(f: ReceiptFilters): SQL | undefined {
   const where: SQL[] = [];
   if (f.q) {
     const term = `%${escapeLike(f.q)}%`;
@@ -87,8 +84,15 @@ export async function listReceipts(
   if (f.account) where.push(eq(receipts.collectingAccount, f.account));
   if (f.from) where.push(gte(receipts.receiptDate, f.from));
   if (f.to) where.push(lte(receipts.receiptDate, f.to));
-  const condition = where.length ? and(...where) : undefined;
+  return where.length ? and(...where) : undefined;
+}
 
+export async function listReceipts(
+  db: Db,
+  f: ReceiptFilters,
+  pageSize = RECEIPTS_PAGE_SIZE,
+): Promise<{ rows: ReceiptRow[]; totals: ReceiptTotals }> {
+  const condition = receiptWhere(f);
   const live = sql`${receipts.status} <> 'Reversed'`;
   const select = () =>
     db
