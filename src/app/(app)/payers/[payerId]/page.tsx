@@ -1,5 +1,6 @@
 import { desc, eq } from "drizzle-orm";
-import { FilePlus, Pencil } from "lucide-react";
+import { FilePlus, Pencil, ReceiptText } from "lucide-react";
+import { ReceiptStatusPill } from "@/components/receipt-status-pill";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,6 +35,7 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
     listPayerNotices(db, payerId, RECENT),
     db
       .select({
+        id: receipts.id,
         receiptNo: receipts.receiptNo,
         receiptDate: receipts.receiptDate,
         revenueCode: receipts.revenueCode,
@@ -86,23 +88,16 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
       mobile: true,
       cell: (r) => (
         <div className={r.status === "Reversed" ? "text-muted line-through" : undefined}>
-          <p className="money font-medium">{r.receiptNo}</p>
+          <Link href={`/register/${r.id}`} className="money font-medium underline-offset-2 hover:underline">
+            {r.receiptNo}
+          </Link>
           <p className="text-sm text-muted">{formatDate(r.receiptDate)}</p>
         </div>
       ),
     },
     { key: "head", header: "Revenue head", mobile: true, cell: (r) => <HeadCell code={r.revenueCode} head={r.revenueHead} /> },
     { key: "paid", header: "Amount paid", align: "right", mobile: true, cell: (r) => <Naira value={formatAmount(r.amountPaid)} /> },
-    {
-      key: "status",
-      header: "Status",
-      mobile: true,
-      cell: (r) => (
-        <StatusPill tone={r.status === "Confirmed" ? "emerald" : r.status === "Reversed" ? "slate" : "amber"}>
-          {r.status}
-        </StatusPill>
-      ),
-    },
+    { key: "status", header: "Status", mobile: true, cell: (r) => <ReceiptStatusPill status={r.status} /> },
   ];
 
   const details: [string, React.ReactNode][] = [
@@ -132,6 +127,11 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
         description={[p.payerId, p.category].filter(Boolean).join(" · ")}
         actions={
           <>
+            {p.active && can(gate.user.roles, "receipts.record") && (
+              <ButtonLink href={`/new-receipt?payer=${encodeURIComponent(p.payerId)}`} variant="secondary">
+                <ReceiptText aria-hidden className="size-4" /> Record receipt
+              </ButtonLink>
+            )}
             {p.active && can(gate.user.roles, "dn.issue") && (
               <ButtonLink href={`/new-demand-notice?payer=${encodeURIComponent(p.payerId)}`} variant="secondary">
                 <FilePlus aria-hidden className="size-4" /> Issue demand notice

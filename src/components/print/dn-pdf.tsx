@@ -1,10 +1,9 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formatDate } from "@/lib/dates";
 import type { DnPrintData } from "@/lib/dn-print";
 import { formatAmount } from "@/lib/money";
 import { PRINT } from "@/lib/print-palette";
+import { pdfLogo } from "./pdf-common";
 
 /*
  * Server-side PDF of a demand notice (BUILD_SPEC 1 and 4.10), A4 portrait, black on white with
@@ -12,9 +11,6 @@ import { PRINT } from "@/lib/print-palette";
  * are labelled NGN here; the printable HTML page uses ₦.
  */
 const { ink: INK, rule: RULE, muted: MUTED, alert: ALERT } = PRINT;
-
-// Never split words across lines ("col-lected"); wrap whole words only.
-Font.registerHyphenationCallback((word) => [word]);
 
 const s = StyleSheet.create({
   page: { paddingTop: 40, paddingBottom: 48, paddingHorizontal: 44, fontSize: 10, fontFamily: "Helvetica", color: INK, lineHeight: 1.4 },
@@ -44,13 +40,6 @@ const s = StyleSheet.create({
   foot: { position: "absolute", left: 44, right: 44, bottom: 24, fontSize: 8, color: MUTED, borderTopWidth: 0.5, borderColor: RULE, paddingTop: 4 },
 });
 
-/** The logo as file data: react-pdf treats a bare path as a URL to fetch. Read once per process. */
-let logoData: { data: Buffer; format: "png" } | undefined;
-function logo() {
-  logoData ??= { data: readFileSync(path.join(process.cwd(), "public", "brand", "ogserc-logo.png")), format: "png" };
-  return logoData;
-}
-
 export function DnPdf({ data }: { data: DnPrintData }) {
   const { dn } = data;
   return (
@@ -58,7 +47,7 @@ export function DnPdf({ data }: { data: DnPrintData }) {
       <Page size="A4" style={s.page}>
         <View style={s.header}>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not an HTML img */}
-          <Image style={s.logo} src={logo()} />
+          <Image style={s.logo} src={pdfLogo()} />
           <View style={{ flex: 1 }}>
             <Text style={s.org}>{data.org.name}</Text>
             {data.org.address ? <Text style={s.small}>{data.org.address}</Text> : null}

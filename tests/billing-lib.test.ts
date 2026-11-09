@@ -1,6 +1,15 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { type AmountBand, type AmountFee, computeAmount, formStatus, receiptAmountDue } from "@/lib/amount";
+import Decimal from "decimal.js";
+import {
+  type AmountBand,
+  type AmountFee,
+  computeAmount,
+  formStatus,
+  paymentCheckLine,
+  receiptAmountDue,
+  receiptFormStatus,
+} from "@/lib/amount";
 import { deriveDemandNotice } from "@/lib/demandNotice";
 import { amountInWords } from "@/lib/words";
 
@@ -123,6 +132,46 @@ describe("amount engine (BUILD_SPEC 4.2, acceptance checks)", () => {
     expect(receiptAmountDue({ result: calc("REG-F", { override: "7" }), dnSelected: true, dnOutstanding: "15000000", amountPaid: "1" })?.toFixed(2)).toBe("7.00");
     expect(receiptAmountDue({ result: computed, dnSelected: false, dnOutstanding: null, amountPaid: "1" })?.toFixed(2)).toBe("500000.00");
     expect(receiptAmountDue({ result: calc("GRT-02"), dnSelected: false, dnOutstanding: null, amountPaid: "250" })?.toFixed(2)).toBe("250.00");
+  });
+});
+
+describe("receipt form helpers (workbook New Receipt sheet)", () => {
+  it("uses the receipt form's own quantity hints", () => {
+    const r = (code: string, o: { mw?: string; base?: string } = {}) =>
+      computeAmount({
+        fee: FEES.get(code)!,
+        bands: BANDS,
+        usdNgnRate: "1500",
+        payerCapacityMw: o.mw ?? null,
+        payerRevenueBaseNgn: o.base ?? null,
+        quantity: "1",
+        override: "",
+        form: "receipt",
+      }).quantityHint;
+    expect(r("REG-F")).toBe("Number of units (usually 1).");
+    expect(r("GEN-02", { mw: "25" })).toBe("Band is looked up on the payer's capacity (25.0 MW). If Payers has no capacity, type the MW here.");
+    expect(r("LEV-01", { base: "12000000000" })).toBe("Enter the NGN base. Payer record shows ₦12,000,000,000.");
+    expect(r("GRT-02")).toBe("Not used - put the amount in Override amount due.");
+  });
+
+  it("gives the live check line against the amount due", () => {
+    const d = (v: string) => new Decimal(v);
+    expect(paymentCheckLine(d("60000000"), "45000000").text).toBe("Part payment – balance ₦15,000,000.00");
+    expect(paymentCheckLine(d("100"), "150").text).toBe("Over-payment of ₦50.00");
+    expect(paymentCheckLine(d("100"), "100.00").text).toBe("Payment matches amount due");
+    expect(paymentCheckLine(null, "100").kind).toBeNull();
+    expect(paymentCheckLine(d("100"), "").kind).toBeNull();
+  });
+
+  it("reports the form status in the workbook's order", () => {
+    const base = { payerChosen: true, feeChosen: true, amountPaid: "10", channel: "Remita (TSA)", account: "TSA", paymentRef: "RRR1", refInRegister: false };
+    expect(receiptFormStatus({ ...base, payerChosen: false }).message).toBe("Select the payer");
+    expect(receiptFormStatus({ ...base, amountPaid: "0" }).message).toBe("Enter the amount paid");
+    expect(receiptFormStatus({ ...base, channel: "" }).message).toBe("Select the payment channel");
+    expect(receiptFormStatus({ ...base, account: "" }).message).toBe("Select the bank / collecting account");
+    expect(receiptFormStatus({ ...base, paymentRef: " " }).message).toBe("Enter the payment reference / RRR");
+    expect(receiptFormStatus({ ...base, refInRegister: true }).message).toBe("⚠ Payment reference already in the register");
+    expect(receiptFormStatus(base).ready).toBe(true);
   });
 });
 

@@ -269,3 +269,52 @@ body {
     box-shadow: none !important;
   }
 }
+
+/* ---------- DESIGN.md 5: confirm and reverse receipts ---------- */
+/* Confirm: the row flashes a faint emerald tint for 600 ms. */
+@keyframes ogsrr-row-flash {
+  from {
+    background-color: color-mix(in oklab, var(--emerald-400) 18%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.row-flash {
+  animation: ogsrr-row-flash 600ms ease-out;
+}
+
+/* Reverse: a line draws across the receipt (300 ms), then the row fades to slate. */
+.strike-host {
+  position: relative;
+  display: inline-block;
+}
+.strike-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0.7em;
+  height: 1px;
+  background: currentColor;
+  transform-origin: left center;
+  animation: ogsrr-strike 300ms ease-out both;
+}
+@keyframes ogsrr-strike {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.row-fade-slate {
+  animation: ogsrr-fade-slate 400ms ease-out 300ms both;
+}
+@keyframes ogsrr-fade-slate {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
