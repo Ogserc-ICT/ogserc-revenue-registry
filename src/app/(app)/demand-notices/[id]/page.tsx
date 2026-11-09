@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, ReceiptText } from "lucide-react";
+import { ReceiptStatusPill } from "@/components/receipt-status-pill";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,7 +15,7 @@ import { receipts } from "@/db/schema";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { getDemandNotice } from "@/lib/dn-service";
 import { formatPlain } from "@/lib/fees";
-import { formatAmount } from "@/lib/money";
+import { formatAmount, toDecimal } from "@/lib/money";
 import { can } from "@/lib/permissions";
 import { gatePage } from "@/lib/session";
 import { getAsAt } from "@/lib/settings-server";
@@ -33,6 +34,7 @@ export default async function DemandNoticePage({ params }: { params: Promise<{ i
   if (!dn) notFound();
   const linked = await db
     .select({
+      id: receipts.id,
       receiptNo: receipts.receiptNo,
       receiptDate: receipts.receiptDate,
       amountPaid: receipts.amountPaid,
@@ -51,21 +53,16 @@ export default async function DemandNoticePage({ params }: { params: Promise<{ i
       mobile: true,
       cell: (r) => (
         <div className={r.status === "Reversed" ? "text-muted line-through" : undefined}>
-          <p className="money font-medium">{r.receiptNo}</p>
+          <Link href={`/register/${r.id}`} className="money font-medium underline-offset-2 hover:underline">
+            {r.receiptNo}
+          </Link>
           <p className="text-sm text-muted">{formatDate(r.receiptDate)}</p>
         </div>
       ),
     },
     { key: "ref", header: "Payment ref", mobile: true, cell: (r) => <span className="money text-sm">{r.paymentRef}</span> },
     { key: "paid", header: "Amount paid", align: "right", mobile: true, cell: (r) => <Naira value={formatAmount(r.amountPaid)} /> },
-    {
-      key: "status",
-      header: "Status",
-      mobile: true,
-      cell: (r) => (
-        <StatusPill tone={r.status === "Confirmed" ? "emerald" : r.status === "Reversed" ? "slate" : "amber"}>{r.status}</StatusPill>
-      ),
-    },
+    { key: "status", header: "Status", mobile: true, cell: (r) => <ReceiptStatusPill status={r.status} /> },
   ];
 
   const details: [string, React.ReactNode][] = [
@@ -101,6 +98,11 @@ export default async function DemandNoticePage({ params }: { params: Promise<{ i
             <ButtonLink href={`/print/demand-notices/${dn.id}/pdf`} variant="secondary" prefetch={false}>
               <Download aria-hidden className="size-4" /> PDF
             </ButtonLink>
+            {!dn.cancelled && toDecimal(dn.outstanding).gt(0) && can(gate.user.roles, "receipts.record") && (
+              <ButtonLink href={`/new-receipt?dn=${encodeURIComponent(dn.dnNo)}`} variant="secondary">
+                <ReceiptText aria-hidden className="size-4" /> Record receipt
+              </ButtonLink>
+            )}
             {!dn.cancelled && can(gate.user.roles, "dn.cancel") && <CancelButton id={dn.id} dnNo={dn.dnNo} />}
           </>
         }

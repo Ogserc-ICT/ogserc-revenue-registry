@@ -38,6 +38,9 @@ const DEFAULT_ROUTES = [
   "/new-demand-notice",
   "/demand-notices",
   "/demand-notices?status=open",
+  // Phase 4
+  "/new-receipt",
+  "/register?status=pending",
 ];
 const WIDTHS = [375, 1440];
 const THEMES = ["dark", "light"] as const;
