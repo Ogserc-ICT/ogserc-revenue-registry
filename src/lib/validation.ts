@@ -299,6 +299,49 @@ export const dnFilterSchema = z.object({
 
 export type DnFilters = z.output<typeof dnFilterSchema>;
 
+// ---------- Receipts ----------
+
+export const receiptSchema = z.object({
+  receiptDate: z.string().trim().refine(isIsoDate, "Receipt date is missing or invalid."),
+  payerId: z.string().trim().min(1, "Select the payer.").max(40),
+  feeCode: z.string().trim().min(1, "Select the revenue head.").max(20),
+  dnNo: optionalText(40),
+  period: optionalText(120),
+  quantity: optionalDecimal("basis quantity", 4).transform((v) => v ?? "0"),
+  overrideDue: optionalDecimal("override amount due", 2, { positive: true }),
+  amountPaid: requiredDecimal("amount paid", 2, { positive: true }),
+  channel: required("payment channel", 80),
+  collectingAccount: required("bank / collecting account", 120),
+  paymentRef: required("payment reference / RRR", 60),
+  valueDate: optionalDate("value date"),
+  remarks: optionalText(500),
+});
+
+export type ReceiptValues = z.output<typeof receiptSchema>;
+
+export const receiptIdsSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, "Select the receipts first.").max(200),
+});
+
+export const reverseReceiptsSchema = receiptIdsSchema.extend({
+  reason: z.string().trim().min(3, "Give the reason for reversing.").max(500, "Keep the reason under 500 characters."),
+});
+
+export const RECEIPT_STATUS_FILTERS = ["pending", "confirmed", "reversed"] as const;
+
+export const receiptFilterSchema = z.object({
+  q: z.string().trim().max(100).optional().catch(undefined),
+  status: z.enum(RECEIPT_STATUS_FILTERS).optional().catch(undefined),
+  payer: z.string().trim().max(40).optional().catch(undefined),
+  code: z.string().trim().max(20).optional().catch(undefined),
+  account: z.string().trim().max(120).optional().catch(undefined),
+  from: z.string().refine(isIsoDate).optional().catch(undefined),
+  to: z.string().refine(isIsoDate).optional().catch(undefined),
+  page: z.coerce.number().int().min(1).default(1).catch(1),
+});
+
+export type ReceiptFilters = z.output<typeof receiptFilterSchema>;
+
 // ---------- Revenue budget ----------
 
 export const budgetLineEditSchema = z.object({

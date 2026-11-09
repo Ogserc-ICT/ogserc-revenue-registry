@@ -38,6 +38,8 @@ export interface AmountInput {
   quantity: MoneyInput;
   /** Override amount; when entered it wins (BUILD_SPEC 4.2 step 3). */
   override: MoneyInput;
+  /** Which form's wording to use for the quantity hint; the workbook's two forms differ. */
+  form?: "dn" | "receipt";
 }
 
 export interface AmountResult {
@@ -153,7 +155,10 @@ export function computeAmount(input: AmountInput): AmountResult {
     amount,
     source,
     rateText: rateText(fee, rateNgn, bandMw, fx, cap, unit),
-    quantityHint: quantityHint(fee.basis, capacity, bandMw, toDecimal(input.payerRevenueBaseNgn)),
+    quantityHint:
+      input.form === "receipt"
+        ? receiptQuantityHint(fee.basis, capacity, bandMw, toDecimal(input.payerRevenueBaseNgn))
+        : quantityHint(fee.basis, capacity, bandMw, toDecimal(input.payerRevenueBaseNgn)),
   };
 }
 
@@ -198,6 +203,27 @@ function quantityHint(basis: FeeBasis, capacity: Decimal, bandMw: Decimal, reven
   }
 }
 
+/** The New Receipt sheet's hint beside Basis quantity (E25), word for word. */
+function receiptQuantityHint(basis: FeeBasis, capacity: Decimal, bandMw: Decimal, revenueBase: Decimal): string {
+  switch (basis) {
+    case "Per MW":
+      return `Enter capacity in MW. Payer record shows ${fmt1(capacity)} MW.`;
+    case "MW Band":
+      return `Band is looked up on the payer's capacity (${fmt1(bandMw)} MW). If Payers has no capacity, type the MW here.`;
+    case "% of Revenue":
+      return `Enter the NGN base. Payer record shows ₦${fmt0(revenueBase)}.`;
+    case "Per Day":
+      return "Enter the number of days late - the Schedule 3 cap is applied automatically.";
+    case "Variable":
+      return "Not used - put the amount in Override amount due.";
+    default:
+      return "Number of units (usually 1).";
+  }
+}
+
+/** Receipt form hint before a revenue head is picked (E25). */
+export const RECEIPT_QUANTITY_HINT_EMPTY = "Quantity used to compute the amount due (usually 1).";
+
 /**
  * The workbook's form status line (C34), in order. `payerChosen` and `feeChosen` say whether
  * the selects are filled in.
@@ -213,8 +239,47 @@ export function formStatus(opts: { payerChosen: boolean; feeChosen: boolean; res
 }
 
 /**
+ * The New Receipt form status line (C40), in the workbook's order. `refInRegister` is the
+ * live duplicate check on the payment reference.
+ */
+export function receiptFormStatus(o: {
+  payerChosen: boolean;
+  feeChosen: boolean;
+  amountPaid: MoneyInput;
+  channel: string;
+  account: string;
+  paymentRef: string;
+  refInRegister: boolean;
+}): { ready: boolean; message: string } {
+  if (!o.payerChosen) return { ready: false, message: "Select the payer" };
+  if (!o.feeChosen) return { ready: false, message: "Select the revenue head" };
+  if (!isEntered(o.amountPaid) || toDecimal(o.amountPaid).lte(0)) return { ready: false, message: "Enter the amount paid" };
+  if (!o.channel) return { ready: false, message: "Select the payment channel" };
+  if (!o.account) return { ready: false, message: "Select the bank / collecting account" };
+  if (!o.paymentRef.trim()) return { ready: false, message: "Enter the payment reference / RRR" };
+  if (o.refInRegister) return { ready: false, message: "⚠ Payment reference already in the register" };
+  return { ready: true, message: "Ready to save" };
+}
+
+/**
+ * The live check line (BUILD_SPEC 4.3, workbook C41). It compares against the amount due
+ * before the "due = paid" fallback, so it stays blank when nothing is due.
+ */
+export function paymentCheckLine(amountDue: Decimal | null, amountPaid: MoneyInput): {
+  kind: "part" | "over" | "match" | null;
+  text: string;
+} {
+  if (!amountDue || !isEntered(amountPaid) || toDecimal(amountPaid).isZero()) return { kind: null, text: "" };
+  const paid = toDecimal(amountPaid);
+  if (paid.lt(amountDue)) return { kind: "part", text: `Part payment – balance ₦${fmt2(amountDue.minus(paid))}` };
+  if (paid.gt(amountDue)) return { kind: "over", text: `Over-payment of ₦${fmt2(paid.minus(amountDue))}` };
+  return { kind: "match", text: "Payment matches amount due" };
+}
+
+/**
  * Receipt form only (BUILD_SPEC 4.2 steps 4-5): an override wins; otherwise a selected demand
  * notice's outstanding balance; otherwise the computed amount; otherwise the amount paid.
+ * Pass `amountPaid: null` to get the amount due before that last fallback (for the check line).
  */
 export function receiptAmountDue(opts: {
   result: AmountResult;
