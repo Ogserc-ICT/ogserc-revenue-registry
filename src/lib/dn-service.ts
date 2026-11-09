@@ -189,6 +189,13 @@ export async function getDemandNotice(db: Db, id: string, asAt: string): Promise
   return row ? toRow(row) : null;
 }
 
+/** Every notice with its derived fields, for reports (Dashboard ageing, Arrears). */
+export async function allDemandNotices(db: Db, asAt: string): Promise<DnRow[]> {
+  const { query } = derivedSource(db, asAt);
+  const rows = await query({}).orderBy(demandNotices.issueDate, demandNotices.dnNo);
+  return rows.map(toRow);
+}
+
 /** Open (outstanding > 0) notices for a payer, oldest first: for the receipt form's DN picker. */
 export async function openNoticesForPayer(db: Db, payerId: string, asAt: string): Promise<DnRow[]> {
   const { query, outstanding } = derivedSource(db, asAt);
