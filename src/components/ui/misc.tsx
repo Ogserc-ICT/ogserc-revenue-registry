@@ -108,10 +108,13 @@ export function Skeleton({ className }: { className?: string }) {
 
 /** Naira figure: the sign at 0.8em in muted text, tabular figures. */
 export function Naira({ value, className }: { value: string; className?: string }) {
+  // A negative amount reads "−₦500,000.00": the minus goes before the sign.
+  const negative = value.startsWith("-");
   return (
     <span className={cn("money whitespace-nowrap", className)}>
+      {negative && "−"}
       <span className="mr-0.5 text-[0.8em] text-muted">{"₦"}</span>
-      {value}
+      {negative ? value.slice(1) : value}
     </span>
   );
 }

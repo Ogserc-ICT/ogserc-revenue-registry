@@ -141,7 +141,7 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
-## Phase 5: Reports (built, browser checks pending)
+## Phase 5: Reports (complete, awaiting review)
 
 Built 9 Nov 2026. Report rules checked against the workbook's Dashboard, Budget vs Actual, Monthly Summary, Arrears and Bank Recon formulas.
 
@@ -183,7 +183,19 @@ Plus: Monthly Summary reconciles (categories = heads) and totals ₦111,100,000;
 
 ### Checks run
 - `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: 131 pass (26 new: 19 acceptance, 7 recon/import/csv). `pnpm build`: succeeds.
-- Pending: `pnpm screens` and a browser click-through.
+- `pnpm screens` (production build): all 112 combinations (28 screens × 2 themes × 2 widths) have no browser errors and no horizontal overflow.
+- Browser click-through on the dev database, as at 2 Nov 2026 (every check passes, no page errors):
+  - Dashboard: signature figure ₦111,100,000.00 after the count-up, which runs once per session; both percentages labelled 3.91% and 3.34%; IGR/Non-IGR; budget to date (11 months); pending ₦7.75m / 2; outstanding ₦31.05m / 4 open; over 90 days ₦31m / 3; receipts 16 with reversed shown separately; collection rate 64.94%; annual budget ₦3.33bn; top payers in order; ageing; Needs attention links; chart drawn and "Show as table" (12 months).
+  - Budget vs Actual: BL-A2 ₦2,344,119,881.78 to date, ₦55,000,000.00, Behind budget; total ₦2,838,653,215.12; the budget-line check; 11 months elapsed.
+  - Monthly Summary reconciles, total ₦111,100,000.00. Arrears all-payers row ₦88,550,000.00 billed, ₦31,050,000.00 outstanding, 64.94%.
+  - Bank Recon: Feb TSA ₦41,000,000.00, FY ₦117,750,000.00, pending footer; a statement total entered (difference ₦0.00, matches), changed (−₦500,000.00, highlighted "difference to explain") and cleared.
+  - Every Excel export downloaded and opened: Register (Pending only filter, 2 rows), Demand notices (7), Budget vs Actual (3 sheets, BL-A2), Monthly Summary, Arrears, Bank Recon, Export everything (15 sheets, no password hashes); money cells are numbers.
+  - Data page: template downloads; CSV import preview (1 to add with its ID, 1 skipped as an existing name), then cancelled.
+  - Viewer: Dashboard figures, no links to demand notice pages, Bank Recon read-only, no Data page; exports: everything 403, demand notices 403, register 200.
+- Data afterwards: payers, receipts, notices and serials unchanged; no statement totals left. The audit log gained 9 "Export" entries and 5 "Bank statement total entered" entries (enter, change and clear, then enter and clear again to recheck the highlight after a script timing fault).
+- Found and fixed during the browser pass:
+  - negative amounts showed as "₦-500,000.00"; `Naira` now renders "−₦500,000.00";
+  - at 1440px the Budget vs Actual line table (Status off-screen), Arrears and Demand notices needed sideways scrolling: money columns now carry "(₦)" in the header with plain figures, headers wrap, and name columns are a little narrower. Measured afterwards: every table fits except the 14-column month grid, which scrolls by design.
 
 ### Decisions
 | Decision | Why |

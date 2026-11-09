@@ -5,7 +5,7 @@ import { NoAccess } from "@/components/placeholder-page";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { type Column, DataTable } from "@/components/ui/data-table";
-import { EmptyState, Naira, PageHeader } from "@/components/ui/misc";
+import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { db } from "@/db";
 import { formatDate } from "@/lib/dates";
 import { formatAmount, toDecimal } from "@/lib/money";
@@ -16,7 +16,8 @@ import { getAsAt } from "@/lib/settings-server";
 
 export const metadata: Metadata = { title: "Arrears" };
 
-const amount = (v: string) => (toDecimal(v).isZero() ? <span className="text-muted">0.00</span> : <Naira value={formatAmount(v)} />);
+// Plain figures with "(₦)" in the headers, so all twelve columns fit at desktop width.
+const amount = (v: string) => <span className={cn("money text-sm", toDecimal(v).isZero() && "text-muted")}>{formatAmount(v)}</span>;
 
 export default async function ArrearsPage() {
   const gate = await gatePage("reports.view");
@@ -31,7 +32,7 @@ export default async function ArrearsPage() {
       header: "Payer",
       mobile: true,
       cell: (r) => (
-        <div className="min-w-44">
+        <div className="min-w-36">
           {canPayers && r.payerId ? (
             <Link href={`/payers/${encodeURIComponent(r.payerId)}`} className="font-medium underline-offset-2 hover:underline">
               {r.name}
@@ -43,11 +44,11 @@ export default async function ArrearsPage() {
         </div>
       ),
     },
-    { key: "billed", header: "Billed", align: "right", mobile: true, cell: (r) => amount(r.billed) },
-    { key: "paid", header: "Paid vs notices", align: "right", mobile: true, cell: (r) => amount(r.paid) },
+    { key: "billed", header: "Billed (₦)", align: "right", mobile: true, cell: (r) => amount(r.billed) },
+    { key: "paid", header: "Paid vs notices (₦)", align: "right", mobile: true, cell: (r) => amount(r.paid) },
     {
       key: "outstanding",
-      header: "Outstanding",
+      header: "Outstanding (₦)",
       align: "right",
       mobile: true,
       cell: (r) => <span className="font-semibold">{amount(r.outstanding)}</span>,
@@ -55,7 +56,7 @@ export default async function ArrearsPage() {
     ...OPEN_BUCKETS.map(
       (b): Column<ArrearsRow> => ({
         key: b,
-        header: b,
+        header: `${b} (₦)`,
         align: "right",
         mobile: b === "Over 90 days",
         className: cn(b === "Over 90 days" && "text-rose-text"),

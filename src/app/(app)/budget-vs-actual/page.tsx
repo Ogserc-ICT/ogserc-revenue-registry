@@ -23,8 +23,15 @@ const STATUS_TONE: Record<LineStatus, PillTone> = {
   "Unbudgeted receipts": "amber",
 };
 
-const th = "border-b border-border px-3 py-2.5 text-sm font-medium text-muted whitespace-nowrap";
-const td = "px-3 py-2.5 align-top";
+// Headers wrap and figures are 13px so every column, including Status, fits at desktop width.
+const th = "border-b border-border px-2.5 py-2.5 text-xs font-medium text-muted align-bottom";
+const td = "px-2.5 py-2.5 align-top";
+
+/** "−2,289,119,881.78" with a proper minus sign. */
+const formatSigned = (v: string) => {
+  const f = formatAmount(v);
+  return f.startsWith("-") ? `−${f.slice(1)}` : f;
+};
 
 export default async function BudgetVsActualPage() {
   const gate = await gatePage("reports.view");
@@ -34,33 +41,27 @@ export default async function BudgetVsActualPage() {
   const ruleText =
     b.rule === "including_current_month" ? "counting the current month as complete, as the workbook did" : "counting completed months only";
 
+  // Money columns say "(₦)" in the header and show plain figures, so the table fits at desktop width.
+  const money = (v: string, extra?: string) => (
+    <td className={cn(td, "money text-right whitespace-nowrap", extra)}>{formatSigned(v)}</td>
+  );
   const figureCells = (f: BvaFigures) => (
     <>
-      <td className={cn(td, "text-right")}>
-        <Naira value={formatAmount(f.budgetFy)} />
-      </td>
-      <td className={cn(td, "text-right")}>
-        <Naira value={formatAmount(f.budgetToDate)} />
-      </td>
-      <td className={cn(td, "text-right")}>
-        <Naira value={formatAmount(f.actualToDate)} />
-      </td>
-      <td className={cn(td, "text-right", toDecimal(f.variance).lt(0) && "text-rose-text")}>
-        <Naira value={formatAmount(f.variance)} />
-      </td>
+      {money(f.budgetFy)}
+      {money(f.budgetToDate)}
+      {money(f.actualToDate)}
+      {money(f.variance, toDecimal(f.variance).lt(0) ? "text-rose-text" : undefined)}
       <td className={cn(td, "money text-right")}>{f.achievedToDate === null ? "—" : `${f.achievedToDate}%`}</td>
-      <td className={cn(td, "text-right")}>
-        <Naira value={formatAmount(f.actualFy)} />
-      </td>
+      {money(f.actualFy)}
       <td className={cn(td, "money text-right")}>{f.achievedFy === null ? "—" : `${f.achievedFy}%`}</td>
     </>
   );
   const figureHeads = (
     <>
-      <th scope="col" className={cn(th, "text-right")}>Budget FY</th>
-      <th scope="col" className={cn(th, "text-right")}>Budget to date</th>
-      <th scope="col" className={cn(th, "text-right")}>Actual to date</th>
-      <th scope="col" className={cn(th, "text-right")}>Variance to date</th>
+      <th scope="col" className={cn(th, "text-right")}>Budget FY (₦)</th>
+      <th scope="col" className={cn(th, "text-right")}>Budget to date (₦)</th>
+      <th scope="col" className={cn(th, "text-right")}>Actual to date (₦)</th>
+      <th scope="col" className={cn(th, "text-right")}>Variance to date (₦)</th>
       <th scope="col" className={cn(th, "text-right")}>Achieved vs budget to date</th>
       <th scope="col" className={cn(th, "text-right")}>Actual FY</th>
       <th scope="col" className={cn(th, "text-right")}>Achieved vs full-year budget</th>
@@ -106,7 +107,7 @@ export default async function BudgetVsActualPage() {
       <section className="mb-10">
         <SectionHeading title="By budget line" />
         <div className="overflow-x-auto rounded-card border border-border bg-surface">
-          <table className="w-full border-collapse text-base">
+          <table className="w-full border-collapse text-sm">
             <caption className="sr-only">Budget against actual by budget line</caption>
             <thead className="bg-surface-raised">
               <tr>
@@ -118,7 +119,7 @@ export default async function BudgetVsActualPage() {
             <tbody>
               {b.lines.map((l) => (
                 <tr key={l.id} className="border-b border-border last:border-b-0 hover:bg-surface-raised">
-                  <th scope="row" className={cn(td, "min-w-56 text-left font-normal")}>
+                  <th scope="row" className={cn(td, "min-w-40 text-left font-normal")}>
                     <span className="money mr-2 font-medium">{l.id}</span>
                     {l.name}
                   </th>
@@ -141,7 +142,7 @@ export default async function BudgetVsActualPage() {
       <section className="mb-10">
         <SectionHeading title="By budget group" />
         <div className="overflow-x-auto rounded-card border border-border bg-surface">
-          <table className="w-full border-collapse text-base">
+          <table className="w-full border-collapse text-sm">
             <caption className="sr-only">Budget against actual by budget group</caption>
             <thead className="bg-surface-raised">
               <tr>
@@ -152,7 +153,7 @@ export default async function BudgetVsActualPage() {
             <tbody>
               {b.groups.map((g) => (
                 <tr key={g.name} className="border-b border-border last:border-b-0">
-                  <th scope="row" className={cn(td, "min-w-56 text-left font-normal")}>{g.name}</th>
+                  <th scope="row" className={cn(td, "min-w-40 text-left font-normal")}>{g.name}</th>
                   {figureCells(g)}
                 </tr>
               ))}
