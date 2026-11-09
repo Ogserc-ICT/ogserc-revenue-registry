@@ -141,6 +141,50 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
+## Phase 4: Receipts (built, browser checks pending)
+
+Built 9 Nov 2026. As in Phase 3, the rules come from the workbook's New Receipt and Receipt sheets and the VBA (`SaveReceiptCore`, `ConfirmSelected`, `ReverseSelected`).
+
+### What was built
+
+**Receipt service** (`src/lib/receipt-service.ts`)
+- Record (BUILD_SPEC 4.3). Every check runs and all problems come back together: payer exists and is active, head exists and is active, channel and account are active list values, payment ref not on another receipt that isn't reversed (case-insensitive, "possible duplicate"), and, for a notice, that it exists, belongs to the same payer and isn't cancelled. A notice for a different revenue head needs an explicit "It's the right notice" confirmation. Paying more than the notice's balance is allowed and reported.
+- Amount due, worked out on the server: the override, else the notice's outstanding balance, else the computed amount, else the amount paid (as the VBA does). Snapshots of payer name and category, head, revenue category, revenue type, budget line, rate, FX and quantity. Value date defaults to the receipt date.
+- Pending Confirmation, or Confirmed by "<user> (auto)" when auto-confirm is on. Serial, insert and audit in one transaction; the partial unique index on the payment ref is the backstop for two saves at once.
+- Confirm (BUILD_SPEC 4.4): only Pending receipts change; a user's own receipts are skipped on the server (the self-confirmation block, BUILD_SPEC 2); one audit entry per receipt; the result says how many were confirmed and why the rest were skipped.
+- Reverse: reason required; anything not already reversed becomes Reversed; one audit entry each. Reversed receipts drop out of every total and free their payment ref.
+- Edit: pending receipts only, only by the person who recorded them, same checks, old/new audit. The receipt date must stay in the same year because the number contains the year.
+
+**New receipt** (`/new-receipt`, also `?payer=` and `?dn=`): searchable payer and head pickers, the payer's open notices (picking one fills in its head), a live duplicate-reference check, the workbook's quantity hints, the sticky panel (next receipt number, payer, rate, amount due and its source, amount paid, value date), the live check line ("Part payment – balance ₦X" / "Over-payment of ₦X" / "Payment matches amount due") and the workbook's status line in order. Save receipt, Save & print, Clear. Any errors are listed together.
+
+**Register** (`/register`): server-side search (receipt no., payer, ref), filters (status, payer, head, account, receipt dates), Pending only (the top bar's pending badge links here), pagination, totals (receipts and reversed count, confirmed, pending, recorded not reversed). Payment refs used on more than one receipt are red; reversed rows are struck through in slate. Finance/Admin select rows for the bulk bar: Confirm N receipts (counts only those they can confirm and says when some are their own) and Reverse with a reason.
+
+**Animations** (DESIGN.md 5): on confirm the pill cross-fades amber → emerald and a check mark draws in (300 ms) while the row flashes a faint emerald tint (600 ms); totals tween to their new values (400 ms); on reverse a line draws across the row (300 ms) and it fades to slate. Reduced motion turns them all off.
+
+**Receipt page** (`/register/[id]`): figures, the check line, every field including snapshots and who confirmed or reversed it and why; Print, PDF, Edit (recorder, pending), Confirm (not the recorder) and Reverse. **Edit** (`/register/[id]/edit`) reuses the form and keeps a stored amount due that came from an override.
+
+**Official receipt** (`/print/receipts/[id]` and `/pdf`): the workbook's Receipt layout with its banners and validity note, amount in words, and a diagonal watermark: PROVISIONAL (light grey) until confirmed, REVERSED (light red) once reversed. PDF helpers shared with the demand notice (`src/components/print/pdf-common.ts`).
+
+Payer pages get "Record receipt" and receipt links; notice pages get "Record receipt" (pre-filled with the notice) and receipt links.
+
+### Checks run
+- `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: 105 pass (19 new).
+- Database tests on the sample seed: 17 receipts (16 live, 1 reversed), 2 pending worth ₦7,750,000, confirmed ₦111,100,000; every problem listed at once; snapshots, numbering and audit; duplicate RRR blocked in any case without using a number; notice balance as amount due; notice not found / other payer; head mismatch needs confirmation; overpayment of a notice reported; auto-confirm; **self-confirmation blocked**; confirm skips non-pending; a confirmed receipt reduces its notice's balance; reverse with a reason drops out of totals and frees the ref (both receipts then show red); edit by the recorder only, before confirmation, in the same year.
+- Unit tests: receipt quantity hints, check line, form status order.
+- Pending and reversed receipt PDFs rendered from the dev database and inspected (watermarks, banner, words).
+- Pending: `pnpm screens` and a browser click-through.
+
+### Decisions
+| Decision | Why |
+|---|---|
+| Open decision 5 default: a Finance Officer may confirm receipts recorded by anyone except themselves | Agreed default; only self-confirmation is blocked. |
+| The check line compares against the amount due before the "due = paid" fallback | Workbook C41: with nothing due it stays blank instead of saying "matches". |
+| Editing keeps the receipt date in the receipt number's year | The number contains the year and numbers are never reused. To move a receipt to another year, reverse it and record it again. |
+| A stored amount due that didn't come from the head or a notice is pre-filled as the override when editing | The override itself isn't stored; this stops an unrelated edit from changing the amount due. |
+| Payment refs used on any other receipt (including reversed ones) are shown in red | BUILD_SPEC 5 "red highlighting for duplicate refs"; a reversed-then-re-recorded ref is worth a second look. |
+| The receipt's quantity hints use the New Receipt sheet's wording, which differs from New Demand Notice | Ported word for word. |
+| Excel export of the register is left for Phase 5 | As for demand notices. |
+
 ## Phase 3: Billing (complete, awaiting review)
 
 Built 9 Nov 2026.
