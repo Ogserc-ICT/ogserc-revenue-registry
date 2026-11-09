@@ -132,7 +132,7 @@ export function Combobox({
             <button
               type="button"
               tabIndex={-1}
-              aria-label="Clear"
+              aria-label="Clear selection"
               className="rounded p-1 hover:text-text"
               onClick={() => {
                 onChange("");

@@ -59,7 +59,7 @@ export function DnTable({ rows, canCancel }: { rows: DnTableRow[]; canCancel: bo
       header: "Payer",
       mobile: true,
       cell: (r) => (
-        <div className="min-w-40">
+        <div className="min-w-32">
           <p>{r.payerName}</p>
           <p className="money text-sm text-muted">{r.payerId}</p>
         </div>
@@ -70,14 +70,27 @@ export function DnTable({ rows, canCancel }: { rows: DnTableRow[]; canCancel: bo
       header: "Revenue head",
       mobile: true,
       cell: (r) => (
-        <div className="min-w-40">
+        <div className="min-w-32">
           <p className="money text-sm font-medium">{r.revenueCode}</p>
           <p className="text-sm text-muted">{r.revenueHead}</p>
         </div>
       ),
     },
-    { key: "billed", header: "Billed", align: "right", mobile: true, cell: (r) => <Naira value={formatAmount(r.amountBilled)} /> },
-    { key: "paid", header: "Paid", align: "right", cell: (r) => <Naira value={formatAmount(r.paidToDate)} /> },
+    {
+      // Paid sits under Billed so every column, including Status, fits at desktop width.
+      key: "billed",
+      header: "Billed · paid",
+      align: "right",
+      mobile: true,
+      cell: (r) => (
+        <div>
+          <Naira value={formatAmount(r.amountBilled)} />
+          <p className="text-sm text-muted">
+            paid <Naira value={formatAmount(r.paidToDate)} />
+          </p>
+        </div>
+      ),
+    },
     {
       key: "outstanding",
       header: "Outstanding",

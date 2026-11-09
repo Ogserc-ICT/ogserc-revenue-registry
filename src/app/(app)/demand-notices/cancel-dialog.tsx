@@ -27,7 +27,12 @@ export function CancelDialog({
   const toast = useToast();
   const n = ids.length;
 
-  const submit = () =>
+  const submit = () => {
+    // Quick answer for an empty reason; the server checks again (cancelDnSchema).
+    if (reason.trim().length < 3) {
+      setError("Give the reason for cancelling.");
+      return;
+    }
     startTransition(async () => {
       const r = await cancelDnAction(ids, reason);
       if (!r.ok) {
@@ -39,6 +44,7 @@ export function CancelDialog({
       setError(null);
       onDone();
     });
+  };
 
   return (
     <Dialog

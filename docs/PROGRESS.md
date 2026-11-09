@@ -141,7 +141,7 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
-## Phase 3: Billing (built, browser checks pending)
+## Phase 3: Billing (complete, awaiting review)
 
 Built 9 Nov 2026.
 
@@ -182,7 +182,18 @@ The workbook (`OGSERC_Revenue_Register_FMS_v2.xlsm`, git-ignored) is now in the 
 - BUILD_SPEC 10 figures reproduced by tests on the sample seed (as at 2 Nov 2026): DNs billed ₦88,550,000.00; outstanding ₦31,050,000.00 across 4 open notices; over 90 days ₦31,000,000.00 across 3; 31-60 days ₦50,000.00; DN collection rate 64.94%; DN-0001 billed 60m, paid 45m, outstanding 15m, 261 days, Part-paid (overdue); EMG-01 at 1.5 MW = ₦50,000; GEN-02 at 25 MW = ₦45,000,000 (and stored with FX 1,500 and quantity 25).
 - Issue: a failed issue doesn't use up a DN number; Variable heads need an override; the override and the computed amount are both audited.
 - PDF rendered from the dev database and inspected (DN-0001).
-- Pending: `pnpm screens` and a browser click-through as each role (needs the test accounts).
+- `pnpm screens`: all 84 combinations (21 screens × 2 themes × 2 widths) have no browser errors and no horizontal overflow.
+- Browser click-through (every check passes, run twice, no page errors), with **no changes to the dev data** at the owner's request: nothing was issued or cancelled. Demand notice count, cancelled count, DN serial and demand-notice audit entries were recorded before and after and are identical.
+  - Form: status line in the workbook's order; Issue disabled until ready; searchable payer and "CODE — Head" pickers; GEN-02 at 25 MW = ₦45,000,000.00 with the workbook's rate text; EMG-01 at 1.5 MW = ₦50,000.00; EMG-01 at 300 MW asks for an override; LRC-04 31 days = ₦6,200,000.00 and 200 days capped at ₦20,000,000.00; Variable heads need an override; Clear; next number OGSERC/DN/2026/0008.
+  - Register: billed, outstanding, 4 open, 64.94%; DN-0001 Part-paid (overdue), 261 days; Over 90 days = 3 notices, ₦31,000,000.00; bulk bar; cancel refused without a reason.
+  - Notice page, print page (sheet stays white in dark mode), PDF download (`application/pdf`, `OGSERC-DN-2026-0001.pdf`), and the payer page's "Issue demand notice" shortcut.
+  - Viewer: no access to the demand notice pages, PDF refused with 403, sidebar hides them.
+- Found and fixed during the browser pass:
+  - the register's Status and Due columns ran off the right edge at 1440px: Paid now sits under Billed;
+  - the comboboxes' × buttons were also named "Clear", like the form's Clear button: renamed "Clear selection";
+  - an empty cancel reason now gets an instant answer in the browser (the server still checks);
+  - `scripts/screens.ts` waits up to 2 minutes for a page, for slow first compiles on the dev server.
+- The browser checks ran against `pnpm build && pnpm start`: the dev machine had about 400 MB of free memory, and on-demand compiling in `pnpm dev` took minutes per page. The QA accounts were reactivated by the owner for the checks and deactivated again afterwards (audited).
 
 ### Decisions
 | Decision | Why |
