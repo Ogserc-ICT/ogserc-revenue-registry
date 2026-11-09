@@ -141,6 +141,73 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
+## Phase 3: Billing (complete, awaiting review)
+
+Built 9 Nov 2026.
+
+### Source material
+The workbook (`OGSERC_Revenue_Register_FMS_v2.xlsm`, git-ignored) is now in the folder. Its New Demand Notice and DN Print formulas and its VBA module `modRevenue` were read with throwaway scripts (stdlib zip and OLE readers, nothing installed) so the rules below are ported word for word rather than paraphrased. Its Guide sheet is the text Phase 6 needs.
+
+### What was built
+
+**Amount engine** (`src/lib/amount.ts`, BUILD_SPEC 4.2), shared by the form and the server:
+- Effective rate: MW Band looks up `above_mw < MW <= up_to_mw` on the payer's capacity (else the quantity); US$ rates × the Settings FX.
+- Computed amount: rate × quantity; MW Band = the band rate; Variable = none. Any head with a cap is capped (the workbook applies the cap to every basis, not only Per Day).
+- Override wins. Receipt-only rules (DN balance, then amount paid) are in `receiptAmountDue()` for Phase 4.
+- The rate line, quantity hint and form status are the workbook's text, e.g. "₦45,000,000.00 for 25.0 MW (band rate)  (US$ fee @ ₦1,500/US$)" and "⚠ No band rate for 300.0 MW - use Override".
+
+**Demand notice derived fields** (`src/lib/demandNotice.ts`, BUILD_SPEC 4.5): outstanding, days overdue, ageing bucket and status, in the spec's order. The same rules are in SQL in `dn-service.ts` so the register can filter and page on them; a test checks the two agree on every notice.
+
+**Amount in words** (`src/lib/words.ts`): a line-for-line port of the VBA `AmountInWords`. "and" only inside a hundreds group ("One Hundred and Five", "One Thousand Twenty-One"), hyphenated tens, ", … Kobo", always "… Only", "Zero Naira Only".
+
+**New demand notice** (`/new-demand-notice`)
+- Searchable payer and fee head pickers (`Combobox`, keyboard accessible; fee heads labelled "CODE — Head").
+- Live calculation panel (next DN number, payer capacity and revenue base, rate line, computed amount, override, amount billed, due date, status line). One-click "Use 25 MW" / "Use ₦…" where the workbook's hint suggests the payer's figure.
+- Issue, Issue & print, Clear. The server recomputes the amount from the fee schedule, bands and FX (the browser's figure is only a preview), allocates the DN serial in the same transaction as the insert and the audit entry, and stores the head, payer name, rate used, FX used and quantity.
+- Inactive payers and heads are refused. "Issue demand notice" on a payer's page opens the form with that payer.
+
+**Demand notices register** (`/demand-notices`)
+- Server-side search (notice no., payer), filters (status, open, ageing, payer, head, issue dates), quick filters (All, Open only, Over 90 days) and pagination.
+- Totals for everything matching: billed (not cancelled), paid against notices, outstanding with open count, collection rate.
+- Finance/Admin: multi-select (emerald left edge), bulk action bar sliding up (200 ms), cancel with a required reason. Already-cancelled notices are skipped, as in the workbook; one audit entry per notice.
+
+**Notice page** (`/demand-notices/[id]`): figures, details (including rate, FX and quantity used), cancellation details, receipts against the notice, and Print, PDF and Cancel.
+
+**Print and PDF** (`/print/demand-notices/[id]`, `/print/demand-notices/[id]/pdf`)
+- Laid out like the workbook's DN Print sheet: org header, banner ("*** CANCELLED - NOT VALID ***" / "SETTLED - NO BALANCE OUTSTANDING"), RE: line, charge table, less paid, amount outstanding, outstanding in words (blank when nothing is outstanding), due date, days overdue, payment instructions, late note, signatory.
+- A4 portrait, always light (`.paper` re-applies the light tokens inside dark mode), no gradients. The PDF is built on the server with `@react-pdf/renderer` 4.3.0 and needs the same access as viewing the notice.
+
+### Checks run
+- `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: 86 pass (27 new). `pnpm build`: succeeds.
+- BUILD_SPEC 10 figures reproduced by tests on the sample seed (as at 2 Nov 2026): DNs billed ₦88,550,000.00; outstanding ₦31,050,000.00 across 4 open notices; over 90 days ₦31,000,000.00 across 3; 31-60 days ₦50,000.00; DN collection rate 64.94%; DN-0001 billed 60m, paid 45m, outstanding 15m, 261 days, Part-paid (overdue); EMG-01 at 1.5 MW = ₦50,000; GEN-02 at 25 MW = ₦45,000,000 (and stored with FX 1,500 and quantity 25).
+- Issue: a failed issue doesn't use up a DN number; Variable heads need an override; the override and the computed amount are both audited.
+- PDF rendered from the dev database and inspected (DN-0001).
+- `pnpm screens`: all 84 combinations (21 screens × 2 themes × 2 widths) have no browser errors and no horizontal overflow.
+- Browser click-through (every check passes, run twice, no page errors), with **no changes to the dev data** at the owner's request: nothing was issued or cancelled. Demand notice count, cancelled count, DN serial and demand-notice audit entries were recorded before and after and are identical.
+  - Form: status line in the workbook's order; Issue disabled until ready; searchable payer and "CODE — Head" pickers; GEN-02 at 25 MW = ₦45,000,000.00 with the workbook's rate text; EMG-01 at 1.5 MW = ₦50,000.00; EMG-01 at 300 MW asks for an override; LRC-04 31 days = ₦6,200,000.00 and 200 days capped at ₦20,000,000.00; Variable heads need an override; Clear; next number OGSERC/DN/2026/0008.
+  - Register: billed, outstanding, 4 open, 64.94%; DN-0001 Part-paid (overdue), 261 days; Over 90 days = 3 notices, ₦31,000,000.00; bulk bar; cancel refused without a reason.
+  - Notice page, print page (sheet stays white in dark mode), PDF download (`application/pdf`, `OGSERC-DN-2026-0001.pdf`), and the payer page's "Issue demand notice" shortcut.
+  - Viewer: no access to the demand notice pages, PDF refused with 403, sidebar hides them.
+- Found and fixed during the browser pass:
+  - the register's Status and Due columns ran off the right edge at 1440px: Paid now sits under Billed;
+  - the comboboxes' × buttons were also named "Clear", like the form's Clear button: renamed "Clear selection";
+  - an empty cancel reason now gets an instant answer in the browser (the server still checks);
+  - `scripts/screens.ts` waits up to 2 minutes for a page, for slow first compiles on the dev server.
+- The browser checks ran against `pnpm build && pnpm start`: the dev machine had about 400 MB of free memory, and on-demand compiling in `pnpm dev` took minutes per page. The QA accounts were reactivated by the owner for the checks and deactivated again afterwards (audited).
+
+### Decisions
+| Decision | Why |
+|---|---|
+| The cap applies to any head with a cap, not only Per Day | Workbook formula C27; BUILD_SPEC 4.2 described the Per Day case. No seeded head outside Per Day has a cap today. |
+| A head with no rate set shows "⚠ Rate not set - use Override" | The workbook showed "₦0.00 …", which hid why nothing was computed. Same behaviour: an override is required. |
+| The PDF labels amounts "NGN" | The PDF fonts (Helvetica, and Geist) have no ₦ glyph; the printable HTML page shows ₦. Embedding a font with ₦ is possible later. |
+| Excel export of the register is left for Phase 5 | Phase 5 lists "Excel exports"; one export mechanism for all registers and reports. |
+| Printing and PDF downloads aren't audited | BUILD_SPEC 4.11 audits state changes and exports; a print changes nothing. The Phase 5 Excel exports will be audited. |
+| `@react-pdf/renderer` pinned at 4.3.0 | Known-good with React 19. |
+
+### Notes
+- Install packages only with the dev server stopped. Adding the PDF library while it ran left `node_modules` half-linked on Windows, which broke `pnpm build` with "Cannot read properties of null (reading 'useContext')". A clean `pnpm install --frozen-lockfile` fixed it.
+
 ## Phase 2: Masters (complete, awaiting review)
 
 Built 5 Nov 2026.

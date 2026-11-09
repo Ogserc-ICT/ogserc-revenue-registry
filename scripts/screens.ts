@@ -34,6 +34,10 @@ const DEFAULT_ROUTES = [
   "/registration-fees",
   "/licence-fee-tables",
   "/revenue-budget",
+  // Phase 3
+  "/new-demand-notice",
+  "/demand-notices",
+  "/demand-notices?status=open",
 ];
 const WIDTHS = [375, 1440];
 const THEMES = ["dark", "light"] as const;
@@ -75,7 +79,8 @@ async function main() {
         page.on("console", (m) => {
           if (m.type() === "error") problems.push(`${route} [${theme} ${width}] console: ${m.text()}`);
         });
-        await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
+        // Dev servers compile each page on first visit, which can take longer than the 30 s default.
+        await page.goto(`${BASE}${route}`, { waitUntil: "networkidle", timeout: 120_000 });
         // Let hydration finish (dev builds are slow) before Playwright touches the DOM.
         await page.waitForTimeout(1200);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

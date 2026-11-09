@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
-import { Pencil } from "lucide-react";
+import { FilePlus, Pencil } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NoAccess } from "@/components/placeholder-page";
 import { RegistrationPill } from "@/components/registration-pill";
@@ -27,6 +28,7 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
   const payerId = decodeURIComponent((await params).payerId);
   const p = await getPayerSummary(db, payerId);
   if (!p) notFound();
+  const canSeeNotices = can(gate.user.roles, "dn.view");
 
   const [notices, recentReceipts] = await Promise.all([
     listPayerNotices(db, payerId, RECENT),
@@ -55,7 +57,13 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
       mobile: true,
       cell: (r) => (
         <div className={r.cancelled ? "text-muted line-through" : undefined}>
-          <p className="money font-medium">{r.dnNo}</p>
+          {canSeeNotices ? (
+            <Link href={`/demand-notices/${r.id}`} className="money font-medium underline-offset-2 hover:underline">
+              {r.dnNo}
+            </Link>
+          ) : (
+            <p className="money font-medium">{r.dnNo}</p>
+          )}
           <p className="text-sm text-muted">{formatDate(r.issueDate)}</p>
         </div>
       ),
@@ -123,11 +131,18 @@ export default async function PayerPage({ params }: { params: Promise<{ payerId:
         title={p.name}
         description={[p.payerId, p.category].filter(Boolean).join(" · ")}
         actions={
-          can(gate.user.roles, "payers.edit") ? (
-            <ButtonLink href={`/payers/${encodeURIComponent(p.payerId)}/edit`} variant="secondary">
-              <Pencil aria-hidden className="size-4" /> Edit payer
-            </ButtonLink>
-          ) : undefined
+          <>
+            {p.active && can(gate.user.roles, "dn.issue") && (
+              <ButtonLink href={`/new-demand-notice?payer=${encodeURIComponent(p.payerId)}`} variant="secondary">
+                <FilePlus aria-hidden className="size-4" /> Issue demand notice
+              </ButtonLink>
+            )}
+            {can(gate.user.roles, "payers.edit") && (
+              <ButtonLink href={`/payers/${encodeURIComponent(p.payerId)}/edit`} variant="secondary">
+                <Pencil aria-hidden className="size-4" /> Edit payer
+              </ButtonLink>
+            )}
+          </>
         }
       />
       {(!p.active || p.isSample) && (

@@ -12,9 +12,21 @@ export interface Column<T> {
   className?: string;
 }
 
+/** Multi-select for bulk actions. Only usable from client components (it takes callbacks). */
+export interface TableSelection<T> {
+  selected: ReadonlySet<string>;
+  onChange: (next: Set<string>) => void;
+  /** Rows that can't be selected (e.g. already cancelled) get no checkbox. */
+  isSelectable?: (row: T) => boolean;
+  /** Accessible name for a row's checkbox, e.g. "Select OGSERC/DN/2026/0001". */
+  label: (row: T) => string;
+}
+
+const checkboxClass = "size-4 accent-[var(--emerald-600)]";
+
 /**
  * Table on desktop (sticky raised header, no zebra, row hover), stacked cards below 768px
- * showing the key columns (DESIGN.md 4 and 7).
+ * showing the key columns (DESIGN.md 4 and 7). Selected rows get an emerald left border.
  */
 export function DataTable<T>({
   columns,
@@ -22,15 +34,47 @@ export function DataTable<T>({
   rowKey,
   caption,
   rowClassName,
+  selection,
 }: {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string;
   caption: string;
   rowClassName?: (row: T) => string | undefined;
+  selection?: TableSelection<T>;
 }) {
   const mobileCols = columns.filter((c) => c.mobile);
   const [titleCol, ...detailCols] = mobileCols;
+  const selectable = selection ? rows.filter((r) => selection.isSelectable?.(r) ?? true).map(rowKey) : [];
+  const allOn = selectable.length > 0 && selectable.every((k) => selection!.selected.has(k));
+  const someOn = selectable.some((k) => selection?.selected.has(k));
+  const toggle = (key: string) => {
+    const next = new Set(selection!.selected);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    selection!.onChange(next);
+  };
+  const toggleAll = () => {
+    const next = new Set(selection!.selected);
+    for (const k of selectable) {
+      if (allOn) next.delete(k);
+      else next.add(k);
+    }
+    selection!.onChange(next);
+  };
+  const isOn = (row: T) => selection?.selected.has(rowKey(row)) ?? false;
+  const box = (row: T) =>
+    selection && (selection.isSelectable?.(row) ?? true) ? (
+      <input
+        type="checkbox"
+        className={checkboxClass}
+        checked={isOn(row)}
+        onChange={() => toggle(rowKey(row))}
+        aria-label={selection.label(row)}
+      />
+    ) : null;
+  const selectedRing = "shadow-[inset_3px_0_0_var(--emerald-400)]";
+
   return (
     <>
       <div className="hidden overflow-x-auto rounded-card border border-border bg-surface md:block">
@@ -38,6 +82,21 @@ export function DataTable<T>({
           <caption className="sr-only">{caption}</caption>
           <thead className="sticky top-0 z-10">
             <tr className="bg-surface-raised">
+              {selection && (
+                <th scope="col" className="w-10 border-b border-border py-2.5 pr-0 pl-4">
+                  <input
+                    type="checkbox"
+                    className={checkboxClass}
+                    checked={allOn}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someOn && !allOn;
+                    }}
+                    onChange={toggleAll}
+                    disabled={selectable.length === 0}
+                    aria-label="Select every row on this page"
+                  />
+                </th>
+              )}
               {columns.map((c) => (
                 <th
                   key={c.key}
@@ -58,9 +117,11 @@ export function DataTable<T>({
                 key={rowKey(row)}
                 className={cn(
                   "border-b border-border last:border-b-0 hover:bg-surface-raised",
+                  isOn(row) && selectedRing,
                   rowClassName?.(row),
                 )}
               >
+                {selection && <td className="py-3 pr-0 pl-4 align-top">{box(row)}</td>}
                 {columns.map((c) => (
                   <td
                     key={c.key}
@@ -79,9 +140,14 @@ export function DataTable<T>({
         {rows.map((row) => (
           <li
             key={rowKey(row)}
-            className={cn("rounded-card border border-border bg-surface p-4", rowClassName?.(row))}
+            className={cn("rounded-card border border-border bg-surface p-4", isOn(row) && selectedRing, rowClassName?.(row))}
           >
-            {titleCol && <div className="mb-2 font-medium">{titleCol.cell(row)}</div>}
+            {titleCol && (
+              <div className="mb-2 flex items-start gap-3 font-medium">
+                {selection && box(row) && <span className="pt-0.5">{box(row)}</span>}
+                <div className="min-w-0 flex-1">{titleCol.cell(row)}</div>
+              </div>
+            )}
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
               {detailCols.map((c) => (
                 <div key={c.key} className="contents">

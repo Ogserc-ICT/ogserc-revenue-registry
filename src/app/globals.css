@@ -5,7 +5,12 @@
 
 /* ---------- DESIGN.md section 1: colour tokens ---------- */
 
-:root {
+/*
+ * `.paper` re-applies the light values inside dark mode: printed receipts and demand notices
+ * are always light, whatever the theme (DESIGN.md 6).
+ */
+:root,
+.paper {
   /* Light mode surfaces */
   --bg: #f4f8f5;
   --surface: #ffffff;
@@ -242,5 +247,25 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0s !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- DESIGN.md 6: print documents (A4 portrait, always light, no gradients) ---------- */
+@page {
+  size: A4 portrait;
+  margin: 14mm;
+}
+
+@media print {
+  /* The page itself is transparent; the .paper sheet carries the light colours. */
+  html,
+  body {
+    background: transparent !important;
+  }
+  .bg-page-glow {
+    display: none !important;
+  }
+  .print-sheet {
+    box-shadow: none !important;
   }
 }
