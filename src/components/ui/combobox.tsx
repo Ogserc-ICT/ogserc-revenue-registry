@@ -44,6 +44,7 @@ export function Combobox({
   const [active, setActive] = useState(0);
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const selected = options.find((o) => o.value === value);
 
   const matches = useMemo(() => {
@@ -106,6 +107,7 @@ export function Combobox({
       <input type="hidden" name={name} value={value} />
       <div className="relative">
         <input
+          ref={input}
           id={id}
           role="combobox"
           aria-expanded={open}
@@ -142,7 +144,26 @@ export function Combobox({
               <X aria-hidden className="size-3.5" />
             </button>
           )}
-          <ChevronDown aria-hidden className="size-4" />
+          {/* The arrow opens and closes the list, like a normal dropdown. Mouse only: the
+              field itself opens on focus, and the keyboard uses the arrow keys. */}
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={open ? "Hide options" : "Show options"}
+            className="rounded p-1 hover:text-text"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              if (open) {
+                setOpen(false);
+                setQuery("");
+              } else {
+                input.current?.focus();
+                setOpen(true);
+              }
+            }}
+          >
+            <ChevronDown aria-hidden className={cn("size-4 transition-transform duration-150", open && "rotate-180")} />
+          </button>
         </div>
       </div>
       {open && (

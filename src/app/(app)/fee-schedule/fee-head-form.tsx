@@ -116,7 +116,9 @@ export function FeeHeadForm({
           </Field>
           <Field label="Revenue category" htmlFor="category" required className="sm:col-span-2" error={e?.category}>
             <Select {...text("category")}>
-              <option value="">Pick a category</option>
+              <option value="" disabled hidden>
+                Pick a category
+              </option>
               {options.categories.map((c) => (
                 <option key={c} value={c}>
                   {c}

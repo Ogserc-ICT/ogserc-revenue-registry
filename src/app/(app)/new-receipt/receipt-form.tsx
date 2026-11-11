@@ -203,11 +203,7 @@ export function ReceiptForm(props: ReceiptFormProps) {
               options={payers.map((p) => ({ value: p.payerId, label: p.name, hint: [p.payerId, p.category].filter(Boolean).join(" · ") }))}
             />
           </Field>
-        </section>
-
-        <section>
-          <SectionHeading title="What is being paid for" />
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <Field
               label="Demand notice (optional)"
               htmlFor="dnNo"
@@ -303,7 +299,9 @@ export function ReceiptForm(props: ReceiptFormProps) {
             </Field>
             <Field label="Payment channel" htmlFor="channel" required error={e?.channel}>
               <Select id="channel" name="channel" value={v.channel} onChange={(ev) => set("channel")(ev.target.value)} {...describedBy("channel", e?.channel)}>
-                <option value="">Select the channel</option>
+                <option value="" disabled hidden>
+                  Select the channel
+                </option>
                 {channels.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -319,7 +317,9 @@ export function ReceiptForm(props: ReceiptFormProps) {
                 onChange={(ev) => set("collectingAccount")(ev.target.value)}
                 {...describedBy("collectingAccount", e?.collectingAccount)}
               >
-                <option value="">Select the account</option>
+                <option value="" disabled hidden>
+                  Select the account
+                </option>
                 {accounts.map((a) => (
                   <option key={a} value={a}>
                     {a}
