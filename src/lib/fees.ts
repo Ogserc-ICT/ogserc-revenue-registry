@@ -83,3 +83,26 @@ export function shareOf(part: MoneyInput, total: MoneyInput): string | null {
   if (t.isZero()) return null;
   return toDecimal(part).div(t).times(100).toFixed(2);
 }
+
+export interface DescribedFee extends RatedFee {
+  head: string;
+  appliesTo: string | null;
+  legalBasis: string | null;
+  unitBasis: string | null;
+  frequency: string | null;
+}
+
+/**
+ * The two lines shown under a revenue head picker: what the head stands for (who it applies to,
+ * from the fee schedule) and the fee to be paid. Both come from the fee schedule, so Finance
+ * keeps them current by editing the head.
+ */
+export function feeHeadInfo(fee: DescribedFee, usdNgnRate: MoneyInput): { standsFor: string; legalBasis: string | null; feeToPay: string } {
+  const standsFor = fee.appliesTo?.trim() ? `${fee.head}: ${fee.appliesTo.trim()}` : fee.head;
+  let feeToPay = describeRate(fee, usdNgnRate);
+  const unit = fee.unitBasis?.trim();
+  // "per day" and "per MW" are already in the rate text; add the unit for set amounts.
+  if (fee.basis === "Fixed" && fee.publishedRate !== null && unit) feeToPay += ` ${unit}`;
+  if (fee.frequency?.trim().toLowerCase() === "one-off") feeToPay += " (one-off)";
+  return { standsFor, legalBasis: fee.legalBasis?.trim() || null, feeToPay };
+}

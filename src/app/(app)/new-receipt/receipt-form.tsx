@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
+import { FeeHeadInfo } from "@/components/fee-head-info";
 import { Combobox } from "@/components/ui/combobox";
 import { describedBy, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -38,6 +39,9 @@ export interface ReceiptPayerOption {
 
 export interface ReceiptFeeOption extends AmountFee {
   head: string;
+  appliesTo: string | null;
+  legalBasis: string | null;
+  frequency: string | null;
   category: string;
   revenueType: string;
 }
@@ -246,6 +250,7 @@ export function ReceiptForm(props: ReceiptFormProps) {
                 options={fees.map((f) => ({ value: f.code, label: `${f.code} — ${f.head}`, hint: `${f.category} · ${f.revenueType}` }))}
               />
             </Field>
+            <FeeHeadInfo fee={fee} usdNgnRate={usdNgnRate} className="sm:col-span-2" />
             {notice && fee && notice.revenueCode !== fee.code && (
               <p className="flex items-start gap-2 rounded-control border border-amber/40 bg-amber/10 p-3 text-sm sm:col-span-2">
                 <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-text" />

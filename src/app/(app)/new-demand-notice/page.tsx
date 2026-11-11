@@ -38,6 +38,9 @@ export default async function NewDemandNoticePage({ searchParams }: { searchPara
         publishedRate: feeHeads.publishedRate,
         capNgn: feeHeads.capNgn,
         unitBasis: feeHeads.unitBasis,
+        appliesTo: feeHeads.appliesTo,
+        legalBasis: feeHeads.legalBasis,
+        frequency: feeHeads.frequency,
       })
       .from(feeHeads)
       .where(eq(feeHeads.active, true))

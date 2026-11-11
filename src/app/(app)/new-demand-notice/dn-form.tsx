@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
+import { FeeHeadInfo } from "@/components/fee-head-info";
 import { Combobox } from "@/components/ui/combobox";
 import { describedBy, Field, FormMessage, Input, Textarea } from "@/components/ui/field";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -29,6 +30,9 @@ export interface DnPayerOption {
 
 export interface DnFeeOption extends AmountFee {
   head: string;
+  appliesTo: string | null;
+  legalBasis: string | null;
+  frequency: string | null;
 }
 
 export interface DnFormProps {
@@ -143,6 +147,7 @@ export function DnForm(props: DnFormProps) {
                 options={fees.map((f) => ({ value: f.code, label: `${f.code} — ${f.head}`, hint: f.basis }))}
               />
             </Field>
+            <FeeHeadInfo fee={fee} usdNgnRate={usdNgnRate} className="sm:col-span-2" />
             <Field
               label="Basis quantity"
               htmlFor="quantity"

@@ -124,8 +124,14 @@ export function FeeHeadForm({
               ))}
             </Select>
           </Field>
-          <Field label="Applies to" htmlFor="appliesTo" className="sm:col-span-2" error={e?.appliesTo}>
-            <Input {...text("appliesTo")} autoComplete="off" />
+          <Field
+            label="Applies to"
+            htmlFor="appliesTo"
+            className="sm:col-span-2"
+            hint="Shown as “What it stands for” when this head is picked on a receipt or demand notice."
+            error={e?.appliesTo}
+          >
+            <Input {...text("appliesTo", "Shown as “What it stands for” when this head is picked on a receipt or demand notice.")} autoComplete="off" />
           </Field>
         </div>
       </section>
