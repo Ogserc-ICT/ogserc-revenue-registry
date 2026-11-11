@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, ilike, inArray, lte, ne, or, type SQL, sql } from "drizzle-orm";
 import type { Db } from "@/db";
-import { demandNotices, feeHeads, licenceFeeBands, lists, payers, receipts, settings } from "@/db/schema";
+import { demandNotices, feeHeads, licenceFeeBands, lists, payers, receipts, sch3RegistrationFees, settings } from "@/db/schema";
 import { UserFacingError } from "./action-result";
 import { computeAmount, receiptAmountDue } from "./amount";
 import { type AuditActor, AUDIT_ACTIONS, diffFields, writeAudit } from "./audit";
@@ -208,6 +208,36 @@ async function inActiveList(tx: Db, listName: string, value: string, current?: s
  * out the amount due on the server (override, then the notice's balance, then the computed
  * amount, then the amount paid) and takes the snapshots that keep history fixed.
  */
+/**
+ * Registration is a one-off payment (owner's decision, Nov 2026). For a registration head
+ * (REG-A..K), returns the payer's existing registration receipts if they already cover this
+ * head's Schedule 3 fee; null when another receipt is allowed. Pending and confirmed receipts
+ * both count, so a second receipt can't slip in while the first awaits confirmation; reversed
+ * ones don't, so a mistaken receipt can be reversed and recorded again. Part payments are
+ * allowed until the fee is covered.
+ */
+export async function registrationAlreadyPaid(tx: Db, payerId: string, feeCode: string, excludeReceiptId?: string) {
+  const [sch3] = await tx
+    .select({ feeNgn: sch3RegistrationFees.feeNgn })
+    .from(sch3RegistrationFees)
+    .where(eq(sch3RegistrationFees.revenueCode, feeCode));
+  if (!sch3 || toDecimal(sch3.feeNgn).lte(0)) return null;
+  const existing = await tx
+    .select({ receiptNo: receipts.receiptNo, amountPaid: receipts.amountPaid })
+    .from(receipts)
+    .innerJoin(sch3RegistrationFees, eq(sch3RegistrationFees.revenueCode, receipts.revenueCode))
+    .where(
+      and(
+        eq(receipts.payerId, payerId),
+        ne(receipts.status, "Reversed"),
+        excludeReceiptId ? ne(receipts.id, excludeReceiptId) : undefined,
+      ),
+    )
+    .orderBy(receipts.receiptNo);
+  const paid = existing.reduce((a, r) => a.plus(r.amountPaid), toDecimal(0));
+  return paid.gte(sch3.feeNgn) ? { paid: paid.toFixed(2), receiptNos: existing.map((r) => r.receiptNo) } : null;
+}
+
 async function prepare(
   tx: Db,
   v: ReceiptValues,
@@ -239,6 +269,15 @@ async function prepare(
     if (!dn) errors.dnNo = `Demand notice ${v.dnNo} was not found.`;
     else if (dn.payerId !== v.payerId) errors.dnNo = `Demand notice ${v.dnNo} was issued to a different payer.`;
     else if (dn.cancelled) errors.dnNo = `Demand notice ${v.dnNo} has been cancelled.`;
+  }
+
+  if (payer && fee) {
+    const registered = await registrationAlreadyPaid(tx, payer.payerId, fee.code, opts.excludeId);
+    if (registered) {
+      errors.feeCode =
+        `${payer.name} has already registered: ₦${formatAmount(registered.paid)} paid on ${registered.receiptNos.join(", ")}. ` +
+        "Registration is a one-off payment, so a second registration receipt can't be recorded.";
+    }
   }
 
   if (Object.keys(errors).length || !payer || !fee) {

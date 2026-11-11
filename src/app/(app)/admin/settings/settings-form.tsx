@@ -1,16 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useFormAction } from "@/components/ui/use-form-action";
-import { Checkbox, describedBy, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/field";
+import { Checkbox, describedBy, Field, FormMessage, Input, Select } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { saveSettingsAction } from "./actions";
 
 export interface SettingsFormValues {
-  orgName: string;
-  addressLine: string;
   financialYear: string;
   receiptPrefix: string;
   dnPrefix: string;
@@ -21,9 +21,6 @@ export interface SettingsFormValues {
   usdNgnRate: string;
   budgetVersionLabel: string;
   budgetToDateRule: "including_current_month" | "completed_months_only";
-  dnPaymentInstructions: string;
-  dnSignatory: string;
-  latePaymentNote: string;
 }
 
 export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
@@ -45,22 +42,13 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
 
   return (
     <form onSubmit={action} className="flex max-w-3xl flex-col gap-10" noValidate>
-      <section>
-        <SectionHeading title="Organisation" description="Printed on receipts and demand notices." />
-        <div className="grid gap-5">
-          <Field label="Organisation name" htmlFor="orgName" required error={e?.orgName}>
-            <Input {...text("orgName")} required />
-          </Field>
-          <Field
-            label="Address and contact line"
-            htmlFor="addressLine"
-            hint="Office address, phone and email, on one line."
-            error={e?.addressLine}
-          >
-            <Input {...text("addressLine", "Office address, phone and email, on one line.")} />
-          </Field>
-        </div>
-      </section>
+      <p className="flex flex-wrap items-center gap-x-2 rounded-control border border-border bg-surface-raised p-3 text-sm text-muted">
+        The organisation name, address, bank accounts, demand notice text and signatory are in
+        <Link href="/admin/receiver-details" className="font-medium text-text underline underline-offset-2">
+          Receiver details
+        </Link>
+        , which Finance can also edit.
+      </p>
 
       <section>
         <SectionHeading title="Reporting" description="Which year and date the reports use." />
@@ -99,7 +87,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
             hint="Converts US$ fees to naira."
             error={e?.usdNgnRate}
           >
-            <Input {...text("usdNgnRate", "Converts US$ fees to naira.")} inputMode="decimal" required />
+            <MoneyInput {...text("usdNgnRate", "Converts US$ fees to naira.")} dp={6} required />
           </Field>
           <Field
             label="Revenue budget version"
@@ -145,26 +133,6 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
             label="Confirm receipts automatically when they are saved"
             hint={'Normally off, so Finance confirms each receipt. When on, receipts save as Confirmed by "<recorder> (auto)".'}
           />
-        </div>
-      </section>
-
-      <section>
-        <SectionHeading title="Demand notice text" description="Printed at the foot of every demand notice." />
-        <div className="grid gap-5">
-          <Field label="Payment instructions" htmlFor="dnPaymentInstructions" error={e?.dnPaymentInstructions}>
-            <Textarea {...text("dnPaymentInstructions")} rows={3} />
-          </Field>
-          <Field label="Late payment note" htmlFor="latePaymentNote" error={e?.latePaymentNote}>
-            <Textarea {...text("latePaymentNote")} rows={3} />
-          </Field>
-          <Field
-            label="Signatory"
-            htmlFor="dnSignatory"
-            hint="Name and title, e.g. Head, Finance & Accounts."
-            error={e?.dnSignatory}
-          >
-            <Input {...text("dnSignatory", "Name and title, e.g. Head, Finance & Accounts.")} />
-          </Field>
         </div>
       </section>
 

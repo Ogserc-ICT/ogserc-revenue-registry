@@ -1,0 +1,1 @@
+ALTER TABLE "settings" DROP COLUMN "dn_signatory";

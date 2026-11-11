@@ -9,6 +9,7 @@ import {
   demandNotices,
   feeHeads,
   licenceFeeBands,
+  lists,
   payers,
   receipts,
   revenueBudget,
@@ -46,6 +47,18 @@ async function expectDbError(p: Promise<unknown>, pattern: RegExp) {
 }
 
 describe("seed (with sample data)", () => {
+  it("splits the signatory into name and designation, and retires the Remita account", async () => {
+    const [row] = await db.select().from(settings);
+    expect(row).toMatchObject({ signatoryName: "[Name]", signatoryDesignation: "Head, Finance & Accounts", paymentAccounts: [] });
+    expect(row!.dnPaymentInstructions).not.toMatch(/Remita/);
+    const accounts = await db.select().from(lists).where(eq(lists.listName, "Collecting accounts"));
+    expect(accounts.map((a) => [a.value, a.active])).toEqual([
+      ["Ogun State TSA - Remita", false],
+      ["OGSERC Revenue Account - [Bank 1]", true],
+      ["OGSERC Revenue Account - [Bank 2]", true],
+    ]);
+  });
+
   it("loads 78 fee heads, 76 licence bands and 46 payers", async () => {
     expect(await rowCount(feeHeads)).toBe(78);
     expect(await rowCount(licenceFeeBands)).toBe(76);
@@ -196,6 +209,37 @@ describe("seed without sample data", () => {
       expect(s?.asAtDate).toBeNull();
     } finally {
       await fresh.client.close();
+    }
+  });
+});
+
+describe("migration 0003 on an existing database", () => {
+  it("copies the old one-line signatory into name and designation, and retires Remita", async () => {
+    const { PGlite } = await import("@electric-sql/pglite");
+    const { readFileSync } = await import("node:fs");
+    const pg = new PGlite();
+    const run = async (file: string) => {
+      for (const stmt of readFileSync(`src/db/migrations/${file}`, "utf8").split("--> statement-breakpoint")) {
+        if (stmt.trim()) await pg.exec(stmt);
+      }
+    };
+    try {
+      for (const f of ["0000_init.sql", "0001_audit_append_only.sql", "0002_band_rate_nullable.sql"]) await run(f);
+      await pg.exec(`
+        insert into settings (id, org_name, financial_year, dn_signatory) values (1, 'OGSERC', 2026, 'A. Bello, Head, Finance & Accounts');
+        insert into lists (list_name, value) values ('Collecting accounts', 'Ogun State TSA - Remita'), ('Collecting accounts', 'OGSERC Revenue Account - [Bank 1]');
+      `);
+      await run("0003_receiver_details.sql");
+      await run("0004_drop_dn_signatory.sql");
+      const s = await pg.query<{ signatory_name: string; signatory_designation: string }>("select signatory_name, signatory_designation from settings");
+      expect(s.rows[0]).toEqual({ signatory_name: "A. Bello", signatory_designation: "Head, Finance & Accounts" });
+      const l = await pg.query<{ value: string; active: boolean }>("select value, active from lists order by value");
+      expect(l.rows).toEqual([
+        { value: "OGSERC Revenue Account - [Bank 1]", active: true },
+        { value: "Ogun State TSA - Remita", active: false },
+      ]);
+    } finally {
+      await pg.close();
     }
   });
 });

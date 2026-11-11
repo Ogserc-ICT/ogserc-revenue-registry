@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Combobox } from "@/components/ui/combobox";
+import { Field, Input } from "@/components/ui/field";
 import { Naira } from "@/components/ui/misc";
 import { isIsoDate } from "@/lib/dates";
 import { formatAmount } from "@/lib/money";
@@ -31,13 +32,15 @@ export function LateCalculator({
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="grid content-start gap-5 sm:grid-cols-2">
         <Field label="Schedule 3 category" htmlFor={`${id}-cat`} className="sm:col-span-2">
-          <Select id={`${id}-cat`} value={category} onChange={(e) => setCategory(e.target.value)}>
-            {categories.map((c) => (
-              <option key={c.category} value={c.category}>
-                {c.category}: {c.registrant.length > 70 ? `${c.registrant.slice(0, 67)}…` : c.registrant}
-              </option>
-            ))}
-          </Select>
+          <Combobox
+            id={`${id}-cat`}
+            name="category"
+            value={category}
+            onChange={setCategory}
+            placeholder="Search by letter or description"
+            // The full description, not cut short, so each category can be told apart.
+            options={categories.map((c) => ({ value: c.category, label: `${c.category} — ${c.registrant}` }))}
+          />
         </Field>
         <Field label="Registration deadline" htmlFor={`${id}-deadline`} hint="The date registration was due.">
           <Input

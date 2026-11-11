@@ -14,6 +14,7 @@ export async function GET() {
     licenceStatus: "Applicant",
     capacityMw: "12.5",
     lga: "Abeokuta South",
+    address: "12 Example Road, Abeokuta",
     email: "accounts@example.ng",
     dateRegistered: "2026-01-15",
     sch3Category: "C",

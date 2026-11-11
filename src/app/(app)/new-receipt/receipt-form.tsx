@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
+import { FeeHeadInfo } from "@/components/fee-head-info";
 import { Combobox } from "@/components/ui/combobox";
 import { describedBy, Field, Input, Select, Textarea } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Naira, SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -37,6 +39,9 @@ export interface ReceiptPayerOption {
 
 export interface ReceiptFeeOption extends AmountFee {
   head: string;
+  appliesTo: string | null;
+  legalBasis: string | null;
+  frequency: string | null;
   category: string;
   revenueType: string;
 }
@@ -245,6 +250,7 @@ export function ReceiptForm(props: ReceiptFormProps) {
                 options={fees.map((f) => ({ value: f.code, label: `${f.code} — ${f.head}`, hint: `${f.category} · ${f.revenueType}` }))}
               />
             </Field>
+            <FeeHeadInfo fee={fee} usdNgnRate={usdNgnRate} className="sm:col-span-2" />
             {notice && fee && notice.revenueCode !== fee.code && (
               <p className="flex items-start gap-2 rounded-control border border-amber/40 bg-amber/10 p-3 text-sm sm:col-span-2">
                 <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-text" />
@@ -252,13 +258,12 @@ export function ReceiptForm(props: ReceiptFormProps) {
               </p>
             )}
             <Field label="Basis quantity" htmlFor="quantity" hint={fee ? result.quantityHint : RECEIPT_QUANTITY_HINT_EMPTY} error={e?.quantity}>
-              <Input
+              <MoneyInput
                 id="quantity"
                 name="quantity"
+                dp={4}
                 value={v.quantity}
-                onChange={(ev) => set("quantity")(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={set("quantity")}
                 {...describedBy("quantity", e?.quantity, "hint")}
               />
             </Field>
@@ -279,24 +284,20 @@ export function ReceiptForm(props: ReceiptFormProps) {
           <SectionHeading title="Payment" />
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label={"Amount paid (₦)"} htmlFor="amountPaid" required hint="Exactly as shown on the bank / Remita evidence." error={e?.amountPaid}>
-              <Input
+              <MoneyInput
                 id="amountPaid"
                 name="amountPaid"
                 value={v.amountPaid}
-                onChange={(ev) => set("amountPaid")(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={set("amountPaid")}
                 {...describedBy("amountPaid", e?.amountPaid, "hint")}
               />
             </Field>
             <Field label={"Override amount due (₦)"} htmlFor="overrideDue" hint="Use only when the computed amount does not apply." error={e?.overrideDue}>
-              <Input
+              <MoneyInput
                 id="overrideDue"
                 name="overrideDue"
                 value={v.overrideDue}
-                onChange={(ev) => set("overrideDue")(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={set("overrideDue")}
                 {...describedBy("overrideDue", e?.overrideDue, "hint")}
               />
             </Field>

@@ -56,13 +56,16 @@ const prefix = (label: string) =>
 const decimalString = (label: string) =>
   z
     .string()
-    .trim()
-    .regex(/^\d+(\.\d{1,6})?$/, `Enter the ${label} as a number, e.g. 1500 or 1500.50.`)
-    .refine((v) => Number(v) > 0, `The ${label} must be above 0.`);
+    // Amount fields show thousands separators ("1,500"); store the plain number.
+    .transform((v) => v.trim().replace(/,/g, ""))
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+(\.\d{1,6})?$/, `Enter the ${label} as a number, e.g. 1500 or 1500.50.`)
+        .refine((v) => Number(v) > 0, `The ${label} must be above 0.`),
+    );
 
 export const settingsSchema = z.object({
-  orgName: required("organisation name"),
-  addressLine: trimmed(300),
   financialYear: z.coerce
     .number({ message: "Enter the financial year, e.g. 2026." })
     .int("Enter a whole year, e.g. 2026.")
@@ -85,13 +88,39 @@ export const settingsSchema = z.object({
   usdNgnRate: decimalString("exchange rate"),
   budgetVersionLabel: trimmed(120),
   budgetToDateRule: z.enum(["including_current_month", "completed_months_only"]),
-  dnPaymentInstructions: trimmed(1000),
-  dnSignatory: trimmed(200),
-  latePaymentNote: trimmed(1000),
 });
 
 export type SettingsInput = z.input<typeof settingsSchema>;
 export type SettingsValues = z.output<typeof settingsSchema>;
+
+// Receiver (OGSERC) details: printed on demand notices and receipts, kept current by Finance.
+
+export const MAX_PAYMENT_ACCOUNTS = 6;
+
+export const paymentAccountSchema = z.object({
+  bank: required("bank name", 120),
+  accountName: required("account name", 200),
+  accountNumber: trimmed(30)
+    .min(1, "Enter the account number.")
+    .regex(/^[0-9][0-9 -]*$/, "Use digits only (spaces and dashes are fine)."),
+});
+
+export const receiverSchema = z.object({
+  orgName: required("organisation name"),
+  addressLine: trimmed(300),
+  orgPhone: trimmed(100),
+  orgEmail: trimmed(200).refine(
+    (v) => v === "" || z.string().email().safeParse(v).success,
+    "Enter a valid email address, or leave it blank.",
+  ),
+  paymentAccounts: z.array(paymentAccountSchema).max(MAX_PAYMENT_ACCOUNTS, `List at most ${MAX_PAYMENT_ACCOUNTS} accounts.`),
+  dnPaymentInstructions: trimmed(1000),
+  latePaymentNote: trimmed(1000),
+  signatoryName: trimmed(120),
+  signatoryDesignation: trimmed(120),
+});
+
+export type ReceiverValues = z.output<typeof receiverSchema>;
 
 export const raiseSerialSchema = z.object({
   key: z.enum(["receipt", "dn", "payer"]),
@@ -159,10 +188,11 @@ export const payerSchema = z.object({
   category: optionalText(120),
   licenceNo: optionalText(60),
   licenceStatus: optionalText(60),
-  capacityMw: optionalDecimal("capacity in MW", 3),
+  // Required when adding, editing and importing (owner's decision, Nov 2026). 0 = no capacity.
+  capacityMw: requiredDecimal("capacity in MW (0 if the payer has none)", 3),
   revenueBaseNgn: optionalDecimal("revenue base", 2),
   lga: optionalText(80),
-  address: optionalText(300),
+  address: required("address", 300),
   contactPerson: optionalText(120),
   phone: optionalText(40),
   email: trimmed(200)

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { changedMonths, monthsElapsed, parseBudgetInput, sumAmounts } from "@/lib/budget";
 import { describeRate, fractionToPercent, percentToFraction, rateInNaira, shareOf } from "@/lib/fees";
 import { findNearDuplicates, isSameName, nearMatchReason, normaliseName } from "@/lib/payer-names";
-import { lateRegistration, registrationStatus } from "@/lib/registration";
+import { lateRegistration, registrationStatus, suggestSch3Category } from "@/lib/registration";
 
 const seedPayers = (
   JSON.parse(readFileSync("seed/payers.json", "utf8")) as { payer_id: string; name: string }[]
@@ -173,5 +173,25 @@ describe("budget helpers", () => {
     expect(monthsElapsed(2026, "2026-11-02", "completed_months_only")).toBe(10);
     expect(monthsElapsed(2026, "2025-12-31")).toBe(0);
     expect(monthsElapsed(2026, "2027-01-01")).toBe(12);
+  });
+});
+
+describe("Schedule 3 suggestion from the payer category", () => {
+  it("maps categories that have one Schedule 3 category", () => {
+    expect(suggestSch3Category("Successor DisCo (legacy)", "0")).toBe("A");
+    expect(suggestSch3Category("Supply / Trading Licensee", "")).toBe("F");
+    expect(suggestSch3Category("Mini-Grid Developer", "0.5")).toBe("E");
+    expect(suggestSch3Category("Contractor / Consultant", "50")).toBeNull();
+  });
+  it("uses capacity for generation, with commas allowed", () => {
+    expect(suggestSch3Category("Independent Generation Licensee", "1,200")).toBe("C");
+    expect(suggestSch3Category("Embedded Generator", "10")).toBe("C");
+    expect(suggestSch3Category("Embedded Generator", "9.999")).toBe("D");
+    expect(suggestSch3Category("Legacy GenCo", "1")).toBe("D");
+    expect(suggestSch3Category("Embedded Generator", "0.5")).toBe("K");
+    expect(suggestSch3Category("Captive Power Plant", "0.5")).toBe("I");
+    expect(suggestSch3Category("Captive Power Plant", "0.1")).toBeNull();
+    expect(suggestSch3Category("Captive Power Plant", "0")).toBeNull();
+    expect(suggestSch3Category("Captive Power Plant", "abc")).toBeNull();
   });
 });

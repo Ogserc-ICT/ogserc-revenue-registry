@@ -6,10 +6,11 @@ import { NoAccess } from "@/components/placeholder-page";
 import { buttonClass, ButtonLink } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Pagination } from "@/components/ui/data-table";
+import { ComboSelect } from "@/components/ui/combo-select";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Card, EmptyState, Naira, PageHeader } from "@/components/ui/misc";
 import { db } from "@/db";
-import { demandNotices, feeHeads } from "@/db/schema";
+import { demandNotices, feeHeads, payers } from "@/db/schema";
 import { formatDate } from "@/lib/dates";
 import { DN_PAGE_SIZE, listDemandNotices } from "@/lib/dn-service";
 import { shareOf } from "@/lib/fees";
@@ -46,10 +47,12 @@ export default async function DemandNoticesPage({ searchParams }: { searchParams
   const asAt = await getAsAt();
   const [{ rows, totals }, billedPayers, heads] = await Promise.all([
     listDemandNotices(db, f, asAt),
+    // Payers with notices, one entry each under their current name (not the name saved on old notices).
     db
-      .selectDistinct({ payerId: demandNotices.payerId, name: demandNotices.payerName })
-      .from(demandNotices)
-      .orderBy(asc(demandNotices.payerName)),
+      .selectDistinct({ payerId: payers.payerId, name: payers.name })
+      .from(payers)
+      .innerJoin(demandNotices, eq(demandNotices.payerId, payers.payerId))
+      .orderBy(asc(payers.name)),
     db
       .selectDistinct({ code: feeHeads.code, head: feeHeads.head })
       .from(feeHeads)
@@ -145,14 +148,13 @@ export default async function DemandNoticesPage({ searchParams }: { searchParams
           </Select>
         </Field>
         <Field label="Payer" htmlFor="f-payer">
-          <Select id="f-payer" name="payer" defaultValue={f.payer ?? ""}>
-            <option value="">All payers</option>
-            {billedPayers.map((p) => (
-              <option key={p.payerId} value={p.payerId}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
+          <ComboSelect
+            id="f-payer"
+            name="payer"
+            defaultValue={f.payer ?? ""}
+            placeholder="All payers (type to search)"
+            options={billedPayers.map((p) => ({ value: p.payerId, label: p.name, hint: p.payerId }))}
+          />
         </Field>
         <Field label="Revenue head" htmlFor="f-code">
           <Select id="f-code" name="code" defaultValue={f.code ?? ""}>

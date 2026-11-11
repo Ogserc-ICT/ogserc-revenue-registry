@@ -45,7 +45,8 @@ export function describedBy(id: string, error?: string, hint?: string) {
 
 const control = "field-control w-full px-3 text-base";
 
-export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+// ComponentProps<"input"> includes `ref`, which React 19 passes through as a normal prop.
+export function Input({ className, ...props }: React.ComponentProps<"input">) {
   return <input className={cn(control, "h-10", className)} {...props} />;
 }
 

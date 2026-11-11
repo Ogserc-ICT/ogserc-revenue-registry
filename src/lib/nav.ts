@@ -17,6 +17,7 @@ export type NavIcon =
   | "licence"
   | "revenueBudget"
   | "settings"
+  | "receiver"
   | "users"
   | "data"
   | "guide";
@@ -71,6 +72,7 @@ export const NAV: NavGroup[] = [
     label: "Admin",
     items: [
       { href: "/admin/settings", label: "Settings & lists", icon: "settings", capability: "settings.manage" },
+      { href: "/admin/receiver-details", label: "Receiver details", icon: "receiver", capability: "receiver.edit" },
       { href: "/admin/users", label: "Users", icon: "users", capability: "users.manage" },
       { href: "/admin/data", label: "Data import & export", icon: "data", capability: "data.manage" },
     ],

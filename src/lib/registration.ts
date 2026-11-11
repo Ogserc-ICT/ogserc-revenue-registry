@@ -94,3 +94,38 @@ export const SCH3_CATEGORIES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"
 
 /** The fee head that records a category's registration fee, e.g. "F" -> "REG-F". */
 export const registrationCode = (category: string) => `REG-${category}`;
+
+/** Payer categories whose Schedule 3 category follows from generating capacity (C, D, I or K). */
+const BY_CAPACITY = new Set(["Legacy GenCo", "Independent Generation Licensee", "Embedded Generator", "Captive Power Plant"]);
+
+/** Payer categories that map straight to one Schedule 3 category, from the Schedule 3 descriptions. */
+const BY_CATEGORY: Record<string, string> = {
+  "Successor DisCo (legacy)": "A",
+  "Integrated Utility": "B",
+  "Mini-Grid Developer": "E",
+  "Independent Distribution Licensee": "F",
+  "Embedded Distributor": "F",
+  "Supply / Trading Licensee": "F",
+  "Private / Estate / Industrial-Park Network": "G",
+  "Metering Service Provider": "H",
+  "Franchisee / Sub-franchisee": "J",
+};
+
+/**
+ * A suggested Schedule 3 category for a new payer (owner's decision, Nov 2026: prefill only; the
+ * officer can change it). Generation goes by capacity: C at 10 MW or more, D from 1 MW, and below
+ * 1 MW, I for own use (captive) from 200 kW, else K. Null when nothing fits or capacity is unknown.
+ */
+export function suggestSch3Category(payerCategory: string, capacityMw: string): string | null {
+  const direct = BY_CATEGORY[payerCategory];
+  if (direct) return direct;
+  if (!BY_CAPACITY.has(payerCategory)) return null;
+  const raw = capacityMw.replace(/,/g, "").trim();
+  if (!/^\d+(\.\d+)?$/.test(raw)) return null;
+  const mw = toDecimal(raw);
+  if (mw.lte(0)) return null;
+  if (mw.gte(10)) return "C";
+  if (mw.gte(1)) return "D";
+  if (payerCategory === "Captive Power Plant") return mw.gte("0.2") ? "I" : null;
+  return "K";
+}

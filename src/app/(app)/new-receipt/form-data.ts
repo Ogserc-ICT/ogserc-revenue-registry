@@ -44,6 +44,9 @@ export async function getReceiptFormData(current?: {
         publishedRate: feeHeads.publishedRate,
         capNgn: feeHeads.capNgn,
         unitBasis: feeHeads.unitBasis,
+        appliesTo: feeHeads.appliesTo,
+        legalBasis: feeHeads.legalBasis,
+        frequency: feeHeads.frequency,
       })
       .from(feeHeads)
       .where(current ? or(eq(feeHeads.active, true), eq(feeHeads.code, current.revenueCode)) : eq(feeHeads.active, true))

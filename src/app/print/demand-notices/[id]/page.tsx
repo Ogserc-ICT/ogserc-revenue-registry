@@ -8,6 +8,7 @@ import { getDnPrintData } from "@/lib/dn-print";
 import { formatAmount } from "@/lib/money";
 import { gatePage } from "@/lib/session";
 import { PrintToolbar } from "../../print-toolbar";
+import { SignatureBlock } from "../../signature-block";
 
 export const metadata: Metadata = { title: "Print demand notice" };
 
@@ -34,6 +35,7 @@ export default async function PrintDemandNoticePage({ params }: { params: Promis
           <div className="min-w-0">
             <p className="text-[17px] font-semibold uppercase">{data.org.name}</p>
             {data.org.address && <p className="text-[12px]">{data.org.address}</p>}
+            {data.org.contact && <p className="text-[12px]">{data.org.contact}</p>}
           </div>
         </header>
 
@@ -67,6 +69,10 @@ export default async function PrintDemandNoticePage({ params }: { params: Promis
         </dl>
 
         <p className="mt-5 font-semibold">RE: DEMAND FOR PAYMENT - {dn.revenueHead.toUpperCase()}</p>
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4">
+          <dt className="font-medium">Purpose of payment:</dt>
+          <dd>{data.purpose}</dd>
+        </dl>
 
         <table className="mt-3 w-full border-collapse text-[12.5px]">
           <thead>
@@ -84,13 +90,13 @@ export default async function PrintDemandNoticePage({ params }: { params: Promis
               <td className="py-2 pr-3 align-top">{dn.period ?? ""}</td>
               <td className="money py-2 text-right align-top">{formatAmount(dn.amountBilled)}</td>
             </tr>
-            <tr>
-              <td colSpan={3} className="py-1.5 pr-3">
-                Less: confirmed payments received to date
+            <tr className="border-b border-text">
+              <td colSpan={3} className="py-2 pr-3 font-medium">
+                Amount billed
               </td>
-              <td className="money py-1.5 text-right">{formatAmount(dn.paidToDate)}</td>
+              <td className="money py-2 text-right font-medium">{formatAmount(dn.amountBilled)}</td>
             </tr>
-            <tr className="border-y-2 border-text">
+            <tr className="border-b-2 border-text">
               <td colSpan={3} className="py-2 pr-3 font-semibold">
                 AMOUNT OUTSTANDING
               </td>
@@ -98,6 +104,7 @@ export default async function PrintDemandNoticePage({ params }: { params: Promis
             </tr>
           </tbody>
         </table>
+        {data.amountNote && <p className="mt-1.5 text-[11.5px] italic">{data.amountNote}</p>}
 
         <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
           <dt className="font-medium">Amount in words:</dt>
@@ -116,16 +123,32 @@ export default async function PrintDemandNoticePage({ params }: { params: Promis
             <p className="whitespace-pre-line">{data.paymentInstructions}</p>
           </section>
         )}
+        {data.accounts.length > 0 && (
+          <table className="mt-3 w-full border-collapse text-[12.5px]">
+            <thead>
+              <tr className="border-y border-text">
+                <th className="py-1.5 pr-3 text-left font-semibold">Bank</th>
+                <th className="py-1.5 pr-3 text-left font-semibold">Account name</th>
+                <th className="py-1.5 text-left font-semibold">Account number</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.accounts.map((a) => (
+                <tr key={`${a.bank}-${a.accountNumber}`} className="border-b border-border">
+                  <td className="py-1.5 pr-3 align-top">{a.bank}</td>
+                  <td className="py-1.5 pr-3 align-top">{a.accountName}</td>
+                  <td className="money py-1.5 align-top">{a.accountNumber}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         {data.latePaymentNote && <p className="mt-4 whitespace-pre-line">{data.latePaymentNote}</p>}
 
-        <footer className="mt-14">
-          <p>______________________________</p>
-          <p className="mt-1 font-medium whitespace-pre-line">{data.signatory}</p>
-          <p>For: {data.org.name}</p>
-        </footer>
+        <SignatureBlock className="mt-14" signatory={data.signatory} orgName={data.org.name} />
 
         <p className="mt-10 border-t border-border pt-2 text-[10.5px] text-muted">
-          Figures as at {formatDate(data.asAt)}. Paid to date counts confirmed receipts only.
+          Figures as at {formatDate(data.asAt)}.
         </p>
       </article>
     </div>

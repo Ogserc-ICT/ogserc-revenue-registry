@@ -7,6 +7,8 @@ import { hasAnyRole } from "./roles";
  */
 export const CAPABILITIES = {
   "settings.manage": ["admin"],
+  // Receiver details on notices and receipts: name, address, bank accounts, signatory.
+  "receiver.edit": ["admin", "finance_officer"],
   "users.manage": ["admin"],
   "serials.manage": ["admin"],
   "audit.view": ["admin", "finance_officer"],

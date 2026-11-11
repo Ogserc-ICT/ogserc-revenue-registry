@@ -80,13 +80,14 @@ describe("bank statement totals", () => {
 
 describe("payer CSV import (BUILD_SPEC 6)", () => {
   const csv = toCsv([
-    ["Payer name", "Payer category", "LGA", "Schedule 3 category (A-K)", "Email", "Shoe size"],
-    ["Brand New Grid Ltd", "Mini-Grid Developer", "Abeokuta South", "E", "ops@bng.ng", "44"],
-    ["CCETC Taihu Distribution Ltd", "Independent Distribution Licensee", "", "F", "", ""],
-    ["ccetc taihu", "", "", "", "", ""],
-    ["Bad Email Co", "", "", "", "not-an-email", ""],
-    ["Second New Grid Ltd", "Atlantis Category", "", "", "", ""],
-    ["brand new grid limited", "", "", "", "", ""],
+    ["Payer name", "Payer category", "LGA", "Schedule 3 category (A-K)", "Email", "Shoe size", "Address", "Capacity (MW)"],
+    ["Brand New Grid Ltd", "Mini-Grid Developer", "Abeokuta South", "E", "ops@bng.ng", "44", "1 Grid Road", "2.5"],
+    ["CCETC Taihu Distribution Ltd", "Independent Distribution Licensee", "", "F", "", "", "2 Taihu Way", "0"],
+    ["ccetc taihu", "", "", "", "", "", "3 Road", "0"],
+    ["Bad Email Co", "", "", "", "not-an-email", "", "4 Road", "0"],
+    ["Second New Grid Ltd", "Atlantis Category", "", "", "", "", "5 Road", "0"],
+    ["brand new grid limited", "", "", "", "", "", "6 Road", "0"],
+    ["No Address Ltd", "", "", "", "", "", "", ""],
   ]);
 
   it("previews without writing anything, and shows the IDs it would assign", async () => {
@@ -100,6 +101,7 @@ describe("payer CSV import (BUILD_SPEC 6)", () => {
       [5, "skip"],
       [6, "skip"],
       [7, "near-duplicate"],
+      [8, "skip"],
     ]);
     expect(r.rows[0]!.payerId).toBe("OGS-P-0047");
     expect(r.rows[1]!.messages[0]).toMatch(/CCETC TAIHU/);
@@ -108,12 +110,14 @@ describe("payer CSV import (BUILD_SPEC 6)", () => {
     expect(r.rows[4]!.messages[0]).toMatch(/payer categories list/);
     // Row 7 matches row 2 of the same file.
     expect(r.rows[5]!.messages[0]).toMatch(/Brand New Grid Ltd/);
+    expect(r.rows[6]!.messages.join(" ")).toMatch(/Enter the address/);
+    expect(r.rows[6]!.messages.join(" ")).toMatch(/capacity in MW/);
     expect({ count: (await db.select().from(payers)).length, serial: await payerSerial(), audits: (await db.select().from(auditLog)).length }).toEqual(before);
   });
 
   it("imports in one transaction, with near duplicates only when asked", async () => {
     const r = await importPayers(db, actor, csv, { dryRun: false, includeNearDuplicates: true });
-    expect([r.added, r.nearDuplicates, r.skipped]).toEqual([3, 2, 3]);
+    expect([r.added, r.nearDuplicates, r.skipped]).toEqual([3, 2, 4]);
     const [row] = await db.select().from(payers).where(eq(payers.payerId, "OGS-P-0047"));
     expect(row!.name).toBe("Brand New Grid Ltd");
     expect(row!.lga).toBe("Abeokuta South");

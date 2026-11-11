@@ -4,7 +4,8 @@ import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { describedBy, Field, FormMessage, Input } from "@/components/ui/field";
+import { describedBy, Field, FormMessage } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
 import { saveBandRateAction } from "./actions";
@@ -74,12 +75,10 @@ function BandForm({
     <form onSubmit={action} className="flex flex-col gap-4" noValidate>
       <input type="hidden" name="id" value={id} />
       <Field label={currency === "USD" ? "Rate (US$)" : "Rate (₦)"} htmlFor="publishedRate" hint={hint} error={e?.publishedRate}>
-        <Input
+        <MoneyInput
           id="publishedRate"
           name="publishedRate"
           defaultValue={publishedRate}
-          inputMode="decimal"
-          className="money"
           data-autofocus
           {...describedBy("publishedRate", e?.publishedRate, hint)}
         />
