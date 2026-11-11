@@ -164,10 +164,11 @@ export const payerSchema = z.object({
   category: optionalText(120),
   licenceNo: optionalText(60),
   licenceStatus: optionalText(60),
-  capacityMw: optionalDecimal("capacity in MW", 3),
+  // Required when adding, editing and importing (owner's decision, Nov 2026). 0 = no capacity.
+  capacityMw: requiredDecimal("capacity in MW (0 if the payer has none)", 3),
   revenueBaseNgn: optionalDecimal("revenue base", 2),
   lga: optionalText(80),
-  address: optionalText(300),
+  address: required("address", 300),
   contactPerson: optionalText(120),
   phone: optionalText(40),
   email: trimmed(200)

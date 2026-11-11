@@ -17,14 +17,14 @@ export const MAX_IMPORT_ROWS = 2000;
 
 /** CSV columns, in template order; the first is required. Headers are matched loosely. */
 export const IMPORT_COLUMNS = [
-  ["name", "Payer name"],
+  ["name", "Payer name (required)"],
   ["category", "Payer category"],
   ["licenceNo", "Licence number"],
   ["licenceStatus", "Licence status"],
-  ["capacityMw", "Capacity (MW)"],
+  ["capacityMw", "Capacity (MW, required; 0 if none)"],
   ["revenueBaseNgn", "Revenue base (NGN)"],
   ["lga", "LGA"],
-  ["address", "Address"],
+  ["address", "Address (required)"],
   ["contactPerson", "Contact person"],
   ["phone", "Phone"],
   ["email", "Email"],

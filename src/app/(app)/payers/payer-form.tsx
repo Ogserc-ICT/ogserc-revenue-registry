@@ -179,10 +179,11 @@ export function PayerForm({
           <Field
             label="Capacity (MW)"
             htmlFor="capacityMw"
-            hint="Picks the band for MW band fees. Up to 3 decimal places."
+            required
+            hint="Picks the band for MW band fees. Enter 0 if the payer has no generating capacity."
             error={e?.capacityMw}
           >
-            <Input {...text("capacityMw", "Picks the band for MW band fees. Up to 3 decimal places.")} inputMode="decimal" />
+            <MoneyInput {...text("capacityMw", "hint")} dp={3} required />
           </Field>
           <Field
             label={"Revenue base (₦)"}
@@ -210,8 +211,8 @@ export function PayerForm({
           <Field label="LGA" htmlFor="lga" error={e?.lga}>
             {combo("lga", asOptions(options.lgas), "Search LGAs")}
           </Field>
-          <Field label="Address" htmlFor="address" className="sm:col-span-2" error={e?.address}>
-            <Input {...text("address")} autoComplete="off" />
+          <Field label="Address" htmlFor="address" required className="sm:col-span-2" error={e?.address}>
+            <Input {...text("address")} autoComplete="off" required />
           </Field>
           <Field label="Notes" htmlFor="notes" className="sm:col-span-2" error={e?.notes}>
             <Textarea {...text("notes")} rows={3} />
