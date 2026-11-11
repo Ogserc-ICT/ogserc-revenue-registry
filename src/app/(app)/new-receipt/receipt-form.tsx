@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Combobox } from "@/components/ui/combobox";
 import { describedBy, Field, Input, Select, Textarea } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Naira, SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -252,13 +253,12 @@ export function ReceiptForm(props: ReceiptFormProps) {
               </p>
             )}
             <Field label="Basis quantity" htmlFor="quantity" hint={fee ? result.quantityHint : RECEIPT_QUANTITY_HINT_EMPTY} error={e?.quantity}>
-              <Input
+              <MoneyInput
                 id="quantity"
                 name="quantity"
+                dp={4}
                 value={v.quantity}
-                onChange={(ev) => set("quantity")(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={set("quantity")}
                 {...describedBy("quantity", e?.quantity, "hint")}
               />
             </Field>
@@ -279,24 +279,20 @@ export function ReceiptForm(props: ReceiptFormProps) {
           <SectionHeading title="Payment" />
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label={"Amount paid (₦)"} htmlFor="amountPaid" required hint="Exactly as shown on the bank / Remita evidence." error={e?.amountPaid}>
-              <Input
+              <MoneyInput
                 id="amountPaid"
                 name="amountPaid"
                 value={v.amountPaid}
-                onChange={(ev) => set("amountPaid")(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={set("amountPaid")}
                 {...describedBy("amountPaid", e?.amountPaid, "hint")}
               />
             </Field>
             <Field label={"Override amount due (₦)"} htmlFor="overrideDue" hint="Use only when the computed amount does not apply." error={e?.overrideDue}>
-              <Input
+              <MoneyInput
                 id="overrideDue"
                 name="overrideDue"
                 value={v.overrideDue}
-                onChange={(ev) => set("overrideDue")(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={set("overrideDue")}
                 {...describedBy("overrideDue", e?.overrideDue, "hint")}
               />
             </Field>

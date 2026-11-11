@@ -4,7 +4,8 @@ import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { describedBy, Field, FormMessage, Input } from "@/components/ui/field";
+import { describedBy, Field, FormMessage } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Naira } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -91,13 +92,12 @@ function BudgetForm({
           const err = e?.[name] ?? (parsed[i] === null ? "Use a number with up to 2 decimal places." : undefined);
           return (
             <Field key={m} label={m} htmlFor={name} error={err}>
-              <Input
+              <MoneyInput
                 id={name}
                 name={name}
                 value={values[i]}
-                onChange={(ev) => setValues((v) => v.map((x, j) => (j === i ? ev.target.value : x)))}
-                inputMode="decimal"
-                className="money text-right"
+                onValueChange={(next) => setValues((v) => v.map((x, j) => (j === i ? next : x)))}
+                className="text-right"
                 data-autofocus={i === 0 || undefined}
                 {...describedBy(name, err)}
               />

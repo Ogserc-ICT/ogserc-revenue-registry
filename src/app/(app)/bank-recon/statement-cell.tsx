@@ -4,7 +4,8 @@ import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { describedBy, Field, FormMessage, Input } from "@/components/ui/field";
+import { describedBy, Field, FormMessage } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Naira } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -88,12 +89,10 @@ function StatementForm({
       <input type="hidden" name="month" value={month} />
       <input type="hidden" name="collectingAccount" value={account} />
       <Field label={"Statement total (₦)"} htmlFor="statementTotal" hint={hint} error={e?.statementTotal}>
-        <Input
+        <MoneyInput
           id="statementTotal"
           name="statementTotal"
           defaultValue={value ?? ""}
-          inputMode="decimal"
-          className="money"
           data-autofocus
           {...describedBy("statementTotal", e?.statementTotal, hint)}
         />

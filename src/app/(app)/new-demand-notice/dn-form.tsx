@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Combobox } from "@/components/ui/combobox";
 import { describedBy, Field, FormMessage, Input, Textarea } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Naira, SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -148,13 +149,12 @@ export function DnForm(props: DnFormProps) {
               hint={result.quantityHint || "Usually 1"}
               error={e?.quantity}
             >
-              <Input
+              <MoneyInput
                 id="quantity"
                 name="quantity"
+                dp={4}
                 value={quantity}
-                onChange={(ev) => setQuantity(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={setQuantity}
                 disabled={fee?.basis === "Variable"}
                 {...describedBy("quantity", e?.quantity, "hint")}
               />
@@ -184,13 +184,11 @@ export function DnForm(props: DnFormProps) {
               hint="Optional. Required for Variable heads such as penalties. It replaces the computed amount."
               error={e?.override}
             >
-              <Input
+              <MoneyInput
                 id="override"
                 name="override"
                 value={override}
-                onChange={(ev) => setOverride(ev.target.value)}
-                inputMode="decimal"
-                className="money"
+                onValueChange={setOverride}
                 {...describedBy("override", e?.override, "hint")}
               />
             </Field>

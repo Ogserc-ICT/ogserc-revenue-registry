@@ -56,9 +56,14 @@ const prefix = (label: string) =>
 const decimalString = (label: string) =>
   z
     .string()
-    .trim()
-    .regex(/^\d+(\.\d{1,6})?$/, `Enter the ${label} as a number, e.g. 1500 or 1500.50.`)
-    .refine((v) => Number(v) > 0, `The ${label} must be above 0.`);
+    // Amount fields show thousands separators ("1,500"); store the plain number.
+    .transform((v) => v.trim().replace(/,/g, ""))
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+(\.\d{1,6})?$/, `Enter the ${label} as a number, e.g. 1500 or 1500.50.`)
+        .refine((v) => Number(v) > 0, `The ${label} must be above 0.`),
+    );
 
 export const settingsSchema = z.object({
   orgName: required("organisation name"),

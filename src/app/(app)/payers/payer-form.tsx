@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Checkbox, describedBy, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -174,7 +175,7 @@ export function PayerForm({
             hint="Annual revenue for % of revenue fees."
             error={e?.revenueBaseNgn}
           >
-            <Input {...text("revenueBaseNgn", "Annual revenue for % of revenue fees.")} inputMode="decimal" className="money" />
+            <MoneyInput {...text("revenueBaseNgn", "Annual revenue for % of revenue fees.")} />
           </Field>
         </div>
       </section>

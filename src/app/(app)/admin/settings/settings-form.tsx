@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useFormAction } from "@/components/ui/use-form-action";
 import { Checkbox, describedBy, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { saveSettingsAction } from "./actions";
@@ -99,7 +100,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
             hint="Converts US$ fees to naira."
             error={e?.usdNgnRate}
           >
-            <Input {...text("usdNgnRate", "Converts US$ fees to naira.")} inputMode="decimal" required />
+            <MoneyInput {...text("usdNgnRate", "Converts US$ fees to naira.")} dp={6} required />
           </Field>
           <Field
             label="Revenue budget version"

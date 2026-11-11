@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Checkbox, describedBy, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -180,7 +181,7 @@ export function FeeHeadForm({
           </Field>
           {basisHasRate(basis) && (
             <Field label={rateLabel} htmlFor="publishedRate" hint={rateHint} error={e?.publishedRate}>
-              <Input {...text("publishedRate", rateHint)} inputMode="decimal" className="money" readOnly={locked} />
+              <MoneyInput {...text("publishedRate", rateHint)} dp={6} readOnly={locked} />
             </Field>
           )}
           {basis === "Per Day" && (
@@ -190,10 +191,8 @@ export function FeeHeadForm({
               hint="Charges stop growing at this amount. Leave blank for no cap."
               error={e?.capNgn}
             >
-              <Input
+              <MoneyInput
                 {...text("capNgn", "Charges stop growing at this amount. Leave blank for no cap.")}
-                inputMode="decimal"
-                className="money"
                 readOnly={locked}
               />
             </Field>

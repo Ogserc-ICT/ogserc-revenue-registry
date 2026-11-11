@@ -4,7 +4,8 @@ import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { describedBy, Field, FormMessage, Input } from "@/components/ui/field";
+import { describedBy, Field, FormMessage } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
 import type { ActionResult } from "@/lib/action-result";
@@ -56,12 +57,10 @@ function FeeForm({ category, feeNgn, onDone }: { category: string; feeNgn: strin
     <form onSubmit={action} className="flex flex-col gap-4" noValidate>
       <input type="hidden" name="category" value={category} />
       <Field label={"Registration fee (₦)"} htmlFor="feeNgn" required error={e?.feeNgn}>
-        <Input
+        <MoneyInput
           id="feeNgn"
           name="feeNgn"
           defaultValue={feeNgn}
-          inputMode="decimal"
-          className="money"
           data-autofocus
           {...describedBy("feeNgn", e?.feeNgn)}
         />
@@ -122,12 +121,10 @@ function GroupForm({ group, initialNgn, dailyNgn, dailyCapNgn, onDone }: GroupVa
   const e = state && !state.ok ? state.fieldErrors : undefined;
   const field = (name: "initialNgn" | "dailyNgn" | "dailyCapNgn", label: string, value: string, autofocus = false) => (
     <Field label={label} htmlFor={name} required error={e?.[name]}>
-      <Input
+      <MoneyInput
         id={name}
         name={name}
         defaultValue={value}
-        inputMode="decimal"
-        className="money"
         data-autofocus={autofocus || undefined}
         {...describedBy(name, e?.[name])}
       />
