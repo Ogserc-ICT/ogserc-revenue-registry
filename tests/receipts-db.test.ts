@@ -47,7 +47,7 @@ const values = (o: Record<string, string>) =>
   receiptSchema.parse({
     receiptDate: "2026-11-02",
     payerId: "OGS-P-0046",
-    feeCode: "REG-F",
+    feeCode: "PER-05",
     dnNo: "",
     period: "",
     quantity: "1",
@@ -102,7 +102,7 @@ describe("recording receipts (BUILD_SPEC 4.3)", () => {
 
   it("saves as Pending with snapshots, the next number, value date = receipt date, and an audit entry", async () => {
     const before = await serial();
-    const r = await recordReceipt(db, officer, values({ paymentRef: "RRR-NEW-0001" }), { acknowledgeCodeMismatch: false });
+    const r = await recordReceipt(db, officer, values({ feeCode: "REG-F", paymentRef: "RRR-NEW-0001" }), { acknowledgeCodeMismatch: false });
     expect(r.receiptNo).toBe(`OGSERC/RCT/2026/${String(before).padStart(5, "0")}`);
     expect(r.status).toBe("Pending Confirmation");
     const row = (await getReceipt(db, r.id))!;
@@ -121,7 +121,7 @@ describe("recording receipts (BUILD_SPEC 4.3)", () => {
 
   it("blocks a duplicate payment ref (any case) among receipts that aren't reversed, without using a number", async () => {
     const before = await serial();
-    const errs = await fieldErrors(recordReceipt(db, officer, values({ paymentRef: "rrr-new-0001" }), { acknowledgeCodeMismatch: false }));
+    const errs = await fieldErrors(recordReceipt(db, officer, values({ feeCode: "REG-F", paymentRef: "rrr-new-0001" }), { acknowledgeCodeMismatch: false }));
     expect(errs.paymentRef).toMatch(/possible duplicate/);
     expect(await serial()).toBe(before);
   });
@@ -174,6 +174,44 @@ describe("recording receipts (BUILD_SPEC 4.3)", () => {
     const row = (await getReceipt(db, r.id))!;
     expect(row.status).toBe("Confirmed");
     expect(row.confirmedBy).toBe("Revenue Officer (auto)");
+  });
+});
+
+describe("registration is a one-off payment", () => {
+  const reg = (payerId: string, paid: string, ref: string) =>
+    recordReceipt(db, officer, values({ payerId, feeCode: "REG-F", amountPaid: paid, paymentRef: ref }), { acknowledgeCodeMismatch: false });
+
+  it("blocks a second registration receipt once the fee is covered, and says who has paid", async () => {
+    // OGS-P-0046 paid REG-F (₦500,000) in the first recording test above.
+    const errs = await fieldErrors(reg("OGS-P-0046", "500000", "RRR-REG-AGAIN"));
+    expect(errs.feeCode).toMatch(/has already registered: ₦500,000.00 paid on OGSERC\/RCT\/2026\/\d{5}/);
+    expect(errs.feeCode).toMatch(/one-off payment/);
+  });
+
+  it("counts confirmed sample registrations too", async () => {
+    // Green Power Distribution Company has a confirmed REG-F receipt in the sample data.
+    const errs = await fieldErrors(reg("OGS-P-0004", "500000", "RRR-REG-GP"));
+    expect(errs.feeCode).toMatch(/already registered/);
+  });
+
+  it("allows part payments until the fee is covered, and again after a reversal", async () => {
+    await reg("OGS-P-0045", "200000", "RRR-REG-P1");
+    const second = await reg("OGS-P-0045", "300000", "RRR-REG-P2");
+    expect((await fieldErrors(reg("OGS-P-0045", "1", "RRR-REG-P3"))).feeCode).toMatch(/already registered: ₦500,000.00/);
+    await reverseReceipts(db, finance, [second.id], "Wrong amount");
+    await expect(reg("OGS-P-0045", "300000", "RRR-REG-P4")).resolves.toMatchObject({ status: "Pending Confirmation" });
+  });
+
+  it("doesn't count the receipt being edited against itself", async () => {
+    const [own] = (await listReceipts(db, filters({ q: "RRR-REG-P4" }))).rows;
+    const out = await updatePendingReceipt(
+      db,
+      officer,
+      own!.id,
+      values({ payerId: "OGS-P-0045", feeCode: "REG-F", amountPaid: "300000", paymentRef: "RRR-REG-P4", remarks: "Checked" }),
+      { acknowledgeCodeMismatch: false },
+    );
+    expect(out.changed).toBe(1);
   });
 });
 
