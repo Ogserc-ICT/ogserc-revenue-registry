@@ -39,6 +39,15 @@ function splitSignatory(line: string): { signatoryName: string; signatoryDesigna
 
 type Json = Record<string, unknown>;
 
+/**
+ * The workbook's Fee Schedule cuts "Applies to" at 60 characters (REG-F, REG-I). For registration
+ * heads, use the full Schedule 3 description when it starts with the cut text.
+ */
+function fullAppliesTo(code: string, appliesTo: string | null, sch3: Json[]): string | null {
+  const full = sch3.find((r) => r.revenue_code === code)?.registrant;
+  return typeof full === "string" && appliesTo && full.length > appliesTo.length && full.startsWith(appliesTo) ? full : appliesTo;
+}
+
 function readSeed<T>(seedDir: string, file: string): T {
   return JSON.parse(readFileSync(path.join(seedDir, file), "utf8")) as T;
 }
@@ -156,7 +165,7 @@ export async function seedDatabase(db: Db, options: SeedOptions): Promise<SeedRe
           code: String(f.code),
           head: String(f.head),
           category: String(f.category),
-          appliesTo: str(f.applies_to),
+          appliesTo: fullAppliesTo(String(f.code), str(f.applies_to), sch3Json),
           basis: f.basis as (typeof feeHeads.$inferInsert)["basis"],
           currency: (f.currency as "NGN" | "USD") ?? "NGN",
           publishedRate: num(f.published_rate),

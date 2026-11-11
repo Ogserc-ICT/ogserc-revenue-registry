@@ -59,6 +59,14 @@ describe("seed (with sample data)", () => {
     ]);
   });
 
+  it("uses the full Schedule 3 wording where the workbook cut 'Applies to' short", async () => {
+    const rows = await db.select({ code: feeHeads.code, appliesTo: feeHeads.appliesTo }).from(feeHeads).where(sql`${feeHeads.code} in ('REG-F', 'REG-I')`).orderBy(feeHeads.code);
+    expect(rows).toEqual([
+      { code: "REG-F", appliesTo: "Distribution licensees other than successor distribution companies; trading and bulk supply" },
+      { code: "REG-I", appliesTo: "Own-use generation notification under paragraph 3(4) (200 kW to below 1 MW)" },
+    ]);
+  });
+
   it("loads 78 fee heads, 76 licence bands and 46 payers", async () => {
     expect(await rowCount(feeHeads)).toBe(78);
     expect(await rowCount(licenceFeeBands)).toBe(76);

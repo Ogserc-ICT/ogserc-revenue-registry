@@ -143,7 +143,7 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 
 ## Adjustments before Phase 6 (branch `feature/adjustments`, awaiting review)
 
-Requested by the owner after Phase 5, 10–11 Nov 2026. Browser checks wait for the new Neon dev database.
+Requested by the owner after Phase 5, 10–11 Nov 2026. Checked in the browser on the new Neon project's `dev` branch (owned by ictogserc@gmail.com), migrated to 0004 and seeded with sample data.
 
 ### What was built
 - **Amount fields** add thousands separators as you type, keeping the caret in place (`MoneyInput`, `src/lib/money-input.ts`). This covers Override amount due, Amount paid, quantities, rates, caps, budgets and statement totals. The server strips the commas.
@@ -171,6 +171,18 @@ Requested by the owner after Phase 5, 10–11 Nov 2026. Browser checks wait for 
 - New tests cover money typing, the registration block (covered, part-paid, reversed, edit), the head info text, purpose and note wording, receiver validation, the Schedule 3 suggestion, the seed (signatory split, Remita inactive), and migration 0003 run on a database with old data.
 - The demand notice and receipt PDFs were rendered from sample data and read back.
 
+- Browser checks on the new Neon `dev` branch, run as temporary QA Admin and QA Finance accounts: 35 checks.
+  - Finance can edit Receiver details but not Settings & lists.
+  - Bad entries are flagged on the right row, and saving is audited.
+  - The demand notice and receipt (HTML and PDF) show the purpose, billed and outstanding with the note, the bank account, the contact line and the signature block.
+  - The head panel appears on New receipt and New demand notice.
+  - A second registration receipt is blocked, and nothing is saved.
+  - Remita is no longer offered as a collecting account.
+  - The Schedule 3 suggestion works and a picked category is kept.
+  - Payers need an address and capacity.
+  - Changed screens show no browser errors and no sideways scroll in dark and light mode at 375 and 1440px.
+- One test receipt (OGSERC/RCT/2026/00018, for OGS-P-0045) was recorded by mistake during the checks. It was reversed with the reason "QA test receipt from browser checks". The receiver details were put back. Both QA accounts are deactivated.
+
 ### Decisions
 | Decision | Why |
 |---|---|
@@ -180,16 +192,21 @@ Requested by the owner after Phase 5, 10–11 Nov 2026. Browser checks wait for 
 | Receiver details are a separate page that Finance can edit | Owner asked for Finance to keep them current. The rest of Settings (prefixes, FX, as-at date) stays Admin-only. |
 | Remita is retired as a collecting account, kept inactive | Owner's answer (item 6). Old receipts and bank recon still show it. The default payment instructions no longer mention Remita. |
 | Bank accounts are entered in Receiver details and start empty | The owner will supply the two account details. Until then notices print the instructions only. |
+| REG-F and REG-I take the full Schedule 3 wording for *Applies to* | The workbook's Fee Schedule cut them at 60 characters. The seed now uses the Registration Fees wording. The dev database was corrected through the fee schedule edit page (audited). |
 | One signatory for both notices and receipts | Owner's answer (item 9: same block). Say if receipts need a different signatory. |
 | The notice note: "less payments confirmed by OGSERC up to …", "no payment … confirmed", or "paid in full"; none on a cancelled notice | Owner's answer (item 8: both figures with a short note). |
 | Schedule 3 suggestion: DisCo A, Integrated Utility B, Mini-grid E, distribution, embedded distribution and supply/trading F, private networks G, metering H, franchisees J. Generation and captive go by capacity: C from 10 MW, D from 1 MW, captive from 200 kW I, other generation below 1 MW K | Read from the Schedule 3 descriptions. It is a suggestion only. Please check the mapping. |
 
 ### Still open
+- Receipt signatory, if receipts need a different one from notices (owner to confirm).
+- Payer categories with no Schedule 3 suggestion yet (owner to list).
+- New receipt adjustments (owner to describe).
+- Point Vercel's Preview environment at the Neon `dev` branch.
 - Which revenue heads have a fixed fee and which don't (owner to list).
 - Account details for the two remaining collecting accounts.
 - Further payer details on the notice, if needed.
 - Macro adjustments (owner to describe).
-- New Neon project (owned by ictogserc@gmail.com) with `main` for production and `dev` for development; migrate and seed `dev` with sample data, then run the browser checks.
+- Neon `main` (production) stays empty until Phase 6.
 
 ## Phase 5: Reports (complete, awaiting review)
 
