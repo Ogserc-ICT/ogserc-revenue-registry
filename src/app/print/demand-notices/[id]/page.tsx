@@ -84,12 +84,6 @@ export default async function PrintDemandNoticePage({ params }: { params: Promis
               <td className="py-2 pr-3 align-top">{dn.period ?? ""}</td>
               <td className="money py-2 text-right align-top">{formatAmount(dn.amountBilled)}</td>
             </tr>
-            <tr>
-              <td colSpan={3} className="py-1.5 pr-3">
-                Less: confirmed payments received to date
-              </td>
-              <td className="money py-1.5 text-right">{formatAmount(dn.paidToDate)}</td>
-            </tr>
             <tr className="border-y-2 border-text">
               <td colSpan={3} className="py-2 pr-3 font-semibold">
                 AMOUNT OUTSTANDING
@@ -125,7 +119,7 @@ export default async function PrintDemandNoticePage({ params }: { params: Promis
         </footer>
 
         <p className="mt-10 border-t border-border pt-2 text-[10.5px] text-muted">
-          Figures as at {formatDate(data.asAt)}. Paid to date counts confirmed receipts only.
+          Figures as at {formatDate(data.asAt)}.
         </p>
       </article>
     </div>

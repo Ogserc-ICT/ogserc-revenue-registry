@@ -27,7 +27,6 @@ const s = StyleSheet.create({
   table: { marginTop: 8 },
   th: { flexDirection: "row", borderTopWidth: 1, borderBottomWidth: 1, borderColor: INK, paddingVertical: 4, fontFamily: "Helvetica-Bold" },
   td: { flexDirection: "row", paddingVertical: 5, borderBottomWidth: 0.5, borderColor: RULE },
-  less: { flexDirection: "row", paddingVertical: 4 },
   total: { flexDirection: "row", paddingVertical: 5, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: INK, fontFamily: "Helvetica-Bold" },
   cCode: { width: 84, paddingRight: 8 },
   cDesc: { flex: 1, paddingRight: 8 },
@@ -98,10 +97,6 @@ export function DnPdf({ data }: { data: DnPrintData }) {
             <Text style={s.cPeriod}>{dn.period ?? ""}</Text>
             <Text style={s.cAmt}>{formatAmount(dn.amountBilled)}</Text>
           </View>
-          <View style={s.less}>
-            <Text style={{ flex: 1 }}>Less: confirmed payments received to date</Text>
-            <Text style={s.cAmt}>{formatAmount(dn.paidToDate)}</Text>
-          </View>
           <View style={s.total}>
             <Text style={{ flex: 1 }}>AMOUNT OUTSTANDING</Text>
             <Text style={s.cAmt}>{formatAmount(dn.outstanding)}</Text>
@@ -138,7 +133,7 @@ export function DnPdf({ data }: { data: DnPrintData }) {
         </View>
 
         <Text style={s.foot} fixed>
-          Figures as at {formatDate(data.asAt)}. Paid to date counts confirmed receipts only.
+          Figures as at {formatDate(data.asAt)}.
         </Text>
       </Page>
     </Document>
