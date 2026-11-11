@@ -7,10 +7,11 @@ import { TweenNaira } from "@/components/tween-naira";
 import { buttonClass, ButtonLink } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Pagination } from "@/components/ui/data-table";
+import { ComboSelect } from "@/components/ui/combo-select";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Card, EmptyState, PageHeader } from "@/components/ui/misc";
 import { db } from "@/db";
-import { feeHeads, receipts } from "@/db/schema";
+import { feeHeads, payers, receipts } from "@/db/schema";
 import { getListValues } from "@/lib/lists-server";
 import { can } from "@/lib/permissions";
 import { listReceipts, RECEIPTS_PAGE_SIZE } from "@/lib/receipt-service";
@@ -46,7 +47,12 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
 
   const [{ rows, totals }, payerOptions, heads, accounts] = await Promise.all([
     listReceipts(db, f),
-    db.selectDistinct({ payerId: receipts.payerId, name: receipts.payerName }).from(receipts).orderBy(asc(receipts.payerName)),
+    // Payers with receipts, one entry each under their current name (not the name saved on old receipts).
+    db
+      .selectDistinct({ payerId: payers.payerId, name: payers.name })
+      .from(payers)
+      .innerJoin(receipts, eq(receipts.payerId, payers.payerId))
+      .orderBy(asc(payers.name)),
     db
       .selectDistinct({ code: feeHeads.code, head: feeHeads.head })
       .from(feeHeads)
@@ -144,14 +150,13 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
           </Select>
         </Field>
         <Field label="Payer" htmlFor="f-payer">
-          <Select id="f-payer" name="payer" defaultValue={f.payer ?? ""}>
-            <option value="">All payers</option>
-            {payerOptions.map((p) => (
-              <option key={`${p.payerId}-${p.name}`} value={p.payerId}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
+          <ComboSelect
+            id="f-payer"
+            name="payer"
+            defaultValue={f.payer ?? ""}
+            placeholder="All payers (type to search)"
+            options={payerOptions.map((p) => ({ value: p.payerId, label: p.name, hint: p.payerId }))}
+          />
         </Field>
         <Field label="Revenue head" htmlFor="f-code">
           <Select id="f-code" name="code" defaultValue={f.code ?? ""}>

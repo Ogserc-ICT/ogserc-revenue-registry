@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Checkbox, describedBy, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/field";
 import { MoneyInput } from "@/components/ui/money-input";
+import { ComboSelect } from "@/components/ui/combo-select";
+import type { ComboOption } from "@/components/ui/combobox";
 import { SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
@@ -74,6 +76,20 @@ export function PayerForm({
     ...describedBy(name, e?.[name], hint),
   });
 
+  // Long lists (categories, LGAs, Schedule 3) are searchable; type to narrow them down.
+  const combo = (name: keyof PayerFormValues, options: ComboOption[], placeholder: string, hint?: string) => (
+    <ComboSelect
+      id={name}
+      name={name}
+      defaultValue={String(initial[name] ?? "")}
+      options={options}
+      placeholder={placeholder}
+      invalid={Boolean(e?.[name])}
+      describedById={e?.[name] ? `${name}-error` : hint ? `${name}-hint` : undefined}
+    />
+  );
+  const asOptions = (values: string[]): ComboOption[] => values.map((v) => ({ value: v, label: v }));
+
   const select = (name: keyof PayerFormValues, values: string[], blank: string) => (
     <Select {...text(name)}>
       <option value="">{blank}</option>
@@ -110,7 +126,7 @@ export function PayerForm({
             <Input {...text("name", "The registered company name. It must be unique.")} autoComplete="off" data-autofocus required />
           </Field>
           <Field label="Payer category" htmlFor="category" error={e?.category}>
-            {select("category", options.categories, "Not set")}
+            {combo("category", asOptions(options.categories), "Search payer categories")}
           </Field>
           <Field label="Licence status" htmlFor="licenceStatus" error={e?.licenceStatus}>
             {select("licenceStatus", options.licenceStatuses, "Not set")}
@@ -136,14 +152,13 @@ export function PayerForm({
             hint="Sets the registration fee and late-charge group."
             error={e?.sch3Category}
           >
-            <Select {...text("sch3Category", "Sets the registration fee and late-charge group.")}>
-              <option value="">Not set</option>
-              {options.sch3.map(([cat, label]) => (
-                <option key={cat} value={cat}>
-                  {cat}: {label.length > 60 ? `${label.slice(0, 57)}…` : label}
-                </option>
-              ))}
-            </Select>
+            {combo(
+              "sch3Category",
+              // The full description, not cut short, so each category can be told apart.
+              options.sch3.map(([cat, label]) => ({ value: cat, label: `${cat} — ${label}` })),
+              "Search by letter or description",
+              "Sets the registration fee and late-charge group.",
+            )}
           </Field>
           <Field
             label="Expected registration month"
@@ -193,7 +208,7 @@ export function PayerForm({
             <Input {...text("email")} type="email" autoComplete="off" />
           </Field>
           <Field label="LGA" htmlFor="lga" error={e?.lga}>
-            {select("lga", options.lgas, "Not set")}
+            {combo("lga", asOptions(options.lgas), "Search LGAs")}
           </Field>
           <Field label="Address" htmlFor="address" className="sm:col-span-2" error={e?.address}>
             <Input {...text("address")} autoComplete="off" />
