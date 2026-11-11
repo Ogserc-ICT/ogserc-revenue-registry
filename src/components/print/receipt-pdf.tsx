@@ -5,6 +5,7 @@ import { PRINT } from "@/lib/print-palette";
 import { RECEIPT_VALIDITY_NOTE } from "@/lib/print-text";
 import type { ReceiptPrintData } from "@/lib/receipt-print";
 import { pdfLogo } from "./pdf-common";
+import { PdfSignature } from "./pdf-signature";
 
 /*
  * Server-side PDF of an official receipt (BUILD_SPEC 4.10), A4 portrait, black on white, no
@@ -70,6 +71,7 @@ export function ReceiptPdf({ data }: { data: ReceiptPrintData }) {
           <View style={{ flex: 1 }}>
             <Text style={s.org}>{data.org.name}</Text>
             {data.org.address ? <Text style={s.small}>{data.org.address}</Text> : null}
+            {data.org.contact ? <Text style={s.small}>{data.org.contact}</Text> : null}
           </View>
         </View>
 
@@ -112,8 +114,7 @@ export function ReceiptPdf({ data }: { data: ReceiptPrintData }) {
 
         <View style={s.signatures}>
           <View style={s.signature}>
-            <Text>______________________________</Text>
-            <Text>For: Finance &amp; Accounts, OGSERC</Text>
+            <PdfSignature signatory={data.signatory} orgName={data.org.name} />
           </View>
           <View style={s.signature}>
             <Text>______________________________</Text>

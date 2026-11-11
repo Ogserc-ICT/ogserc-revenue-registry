@@ -2,13 +2,16 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { payers } from "@/db/schema";
+import { contactLine } from "./print-text";
 import { getReceipt, type ReceiptRecord } from "./receipt-service";
 import { getSettings } from "./settings-server";
 import { amountInWords } from "./words";
 
 export interface ReceiptPrintData {
   r: ReceiptRecord;
-  org: { name: string; address: string };
+  org: { name: string; address: string; contact: string };
+  /** Same signature block as the demand notice. */
+  signatory: { name: string; designation: string };
   licenceNo: string | null;
   /** The workbook's line under the title, by status. */
   banner: string | null;
@@ -27,7 +30,8 @@ export async function getReceiptPrintData(id: string): Promise<ReceiptPrintData 
   ]);
   return {
     r,
-    org: { name: s.orgName, address: s.addressLine },
+    org: { name: s.orgName, address: s.addressLine, contact: contactLine(s.orgPhone, s.orgEmail) },
+    signatory: { name: s.signatoryName, designation: s.signatoryDesignation },
     licenceNo: payer?.licenceNo ?? null,
     banner:
       r.status === "Pending Confirmation"

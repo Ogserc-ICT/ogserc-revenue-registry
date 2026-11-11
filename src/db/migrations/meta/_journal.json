@@ -22,6 +22,20 @@
       "when": 1793649774028,
       "tag": "0002_band_rate_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794386284085,
+      "tag": "0003_receiver_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794386310112,
+      "tag": "0004_drop_dn_signatory",
+      "breakpoints": true
     }
   ]
 }

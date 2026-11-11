@@ -54,7 +54,7 @@ const values = (o: Record<string, string>) =>
     overrideDue: "",
     amountPaid: "500000",
     channel: "Remita (TSA)",
-    collectingAccount: "Ogun State TSA - Remita",
+    collectingAccount: "OGSERC Revenue Account - [Bank 1]",
     paymentRef: "",
     valueDate: "",
     remarks: "",

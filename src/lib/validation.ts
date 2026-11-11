@@ -66,8 +66,6 @@ const decimalString = (label: string) =>
     );
 
 export const settingsSchema = z.object({
-  orgName: required("organisation name"),
-  addressLine: trimmed(300),
   financialYear: z.coerce
     .number({ message: "Enter the financial year, e.g. 2026." })
     .int("Enter a whole year, e.g. 2026.")
@@ -90,13 +88,39 @@ export const settingsSchema = z.object({
   usdNgnRate: decimalString("exchange rate"),
   budgetVersionLabel: trimmed(120),
   budgetToDateRule: z.enum(["including_current_month", "completed_months_only"]),
-  dnPaymentInstructions: trimmed(1000),
-  dnSignatory: trimmed(200),
-  latePaymentNote: trimmed(1000),
 });
 
 export type SettingsInput = z.input<typeof settingsSchema>;
 export type SettingsValues = z.output<typeof settingsSchema>;
+
+// Receiver (OGSERC) details: printed on demand notices and receipts, kept current by Finance.
+
+export const MAX_PAYMENT_ACCOUNTS = 6;
+
+export const paymentAccountSchema = z.object({
+  bank: required("bank name", 120),
+  accountName: required("account name", 200),
+  accountNumber: trimmed(30)
+    .min(1, "Enter the account number.")
+    .regex(/^[0-9][0-9 -]*$/, "Use digits only (spaces and dashes are fine)."),
+});
+
+export const receiverSchema = z.object({
+  orgName: required("organisation name"),
+  addressLine: trimmed(300),
+  orgPhone: trimmed(100),
+  orgEmail: trimmed(200).refine(
+    (v) => v === "" || z.string().email().safeParse(v).success,
+    "Enter a valid email address, or leave it blank.",
+  ),
+  paymentAccounts: z.array(paymentAccountSchema).max(MAX_PAYMENT_ACCOUNTS, `List at most ${MAX_PAYMENT_ACCOUNTS} accounts.`),
+  dnPaymentInstructions: trimmed(1000),
+  latePaymentNote: trimmed(1000),
+  signatoryName: trimmed(120),
+  signatoryDesignation: trimmed(120),
+});
+
+export type ReceiverValues = z.output<typeof receiverSchema>;
 
 export const raiseSerialSchema = z.object({
   key: z.enum(["receipt", "dn", "payer"]),

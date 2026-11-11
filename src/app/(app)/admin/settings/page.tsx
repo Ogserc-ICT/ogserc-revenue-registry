@@ -67,8 +67,6 @@ async function GeneralTab() {
   return (
     <SettingsForm
       initial={{
-        orgName: s.orgName,
-        addressLine: s.addressLine,
         financialYear: String(s.financialYear),
         receiptPrefix: s.receiptPrefix,
         dnPrefix: s.dnPrefix,
@@ -79,9 +77,6 @@ async function GeneralTab() {
         usdNgnRate: String(Number(s.usdNgnRate)),
         budgetVersionLabel: s.budgetVersionLabel,
         budgetToDateRule: s.budgetToDateRule,
-        dnPaymentInstructions: s.dnPaymentInstructions,
-        dnSignatory: s.dnSignatory,
-        latePaymentNote: s.latePaymentNote,
       }}
     />
   );

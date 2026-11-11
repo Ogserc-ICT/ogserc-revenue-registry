@@ -24,8 +24,6 @@ export async function saveSettingsAction(_prev: ActionResult | null, formData: F
   try {
     const user = await requireAction("settings.manage");
     const values = settingsSchema.parse({
-      orgName: formData.get("orgName"),
-      addressLine: formData.get("addressLine") ?? "",
       financialYear: formData.get("financialYear"),
       receiptPrefix: formData.get("receiptPrefix"),
       dnPrefix: formData.get("dnPrefix"),
@@ -36,9 +34,6 @@ export async function saveSettingsAction(_prev: ActionResult | null, formData: F
       usdNgnRate: formData.get("usdNgnRate"),
       budgetVersionLabel: formData.get("budgetVersionLabel") ?? "",
       budgetToDateRule: formData.get("budgetToDateRule"),
-      dnPaymentInstructions: formData.get("dnPaymentInstructions") ?? "",
-      dnSignatory: formData.get("dnSignatory") ?? "",
-      latePaymentNote: formData.get("latePaymentNote") ?? "",
     });
 
     const changed = await db.transaction(async (tx) => {

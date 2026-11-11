@@ -1,16 +1,24 @@
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { payers } from "@/db/schema";
+import { type PaymentAccount, payers } from "@/db/schema";
+import { formatDate } from "./dates";
 import { getDemandNotice, type DnRow } from "./dn-service";
 import { toDecimal } from "./money";
+import { billedOutstandingNote, contactLine, purposeOfPayment } from "./print-text";
 import { getAsAt, getSettings } from "./settings-server";
 import { amountInWords } from "./words";
 
 export interface DnPrintData {
   dn: DnRow;
   asAt: string;
-  org: { name: string; address: string };
+  /** The receiver (OGSERC): letterhead and the accounts to pay into. */
+  org: { name: string; address: string; contact: string };
+  accounts: PaymentAccount[];
+  /** Written from the revenue head and period. */
+  purpose: string;
+  /** Why billed and outstanding differ; null on a cancelled notice. */
+  amountNote: string | null;
   payer: { address: string | null; licenceNo: string | null };
   /** "*** CANCELLED - NOT VALID ***" or "SETTLED - NO BALANCE OUTSTANDING", as on the workbook's DN Print. */
   banner: string | null;
@@ -18,7 +26,7 @@ export interface DnPrintData {
   outstandingWords: string;
   paymentInstructions: string;
   latePaymentNote: string;
-  signatory: string;
+  signatory: { name: string; designation: string };
 }
 
 /** Everything the printable demand notice and its PDF show. */
@@ -34,7 +42,10 @@ export async function getDnPrintData(id: string): Promise<DnPrintData | null> {
   return {
     dn,
     asAt,
-    org: { name: s.orgName, address: s.addressLine },
+    org: { name: s.orgName, address: s.addressLine, contact: contactLine(s.orgPhone, s.orgEmail) },
+    accounts: s.paymentAccounts,
+    purpose: purposeOfPayment(dn.revenueHead, dn.period),
+    amountNote: dn.cancelled ? null : billedOutstandingNote(dn.amountBilled, dn.outstanding, formatDate(asAt)),
     payer: { address: p?.address ?? null, licenceNo: p?.licenceNo ?? null },
     banner: dn.cancelled
       ? "*** CANCELLED - NOT VALID ***"
@@ -44,6 +55,6 @@ export async function getDnPrintData(id: string): Promise<DnPrintData | null> {
     outstandingWords: outstanding.gt(0) ? amountInWords(outstanding) : "",
     paymentInstructions: s.dnPaymentInstructions,
     latePaymentNote: s.latePaymentNote,
-    signatory: s.dnSignatory,
+    signatory: { name: s.signatoryName, designation: s.signatoryDesignation },
   };
 }

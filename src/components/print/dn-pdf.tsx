@@ -4,6 +4,7 @@ import type { DnPrintData } from "@/lib/dn-print";
 import { formatAmount } from "@/lib/money";
 import { PRINT } from "@/lib/print-palette";
 import { pdfLogo } from "./pdf-common";
+import { PdfSignature } from "./pdf-signature";
 
 /*
  * Server-side PDF of a demand notice (BUILD_SPEC 1 and 4.10), A4 portrait, black on white with
@@ -27,7 +28,11 @@ const s = StyleSheet.create({
   table: { marginTop: 8 },
   th: { flexDirection: "row", borderTopWidth: 1, borderBottomWidth: 1, borderColor: INK, paddingVertical: 4, fontFamily: "Helvetica-Bold" },
   td: { flexDirection: "row", paddingVertical: 5, borderBottomWidth: 0.5, borderColor: RULE },
-  total: { flexDirection: "row", paddingVertical: 5, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: INK, fontFamily: "Helvetica-Bold" },
+  subtotal: { flexDirection: "row", paddingVertical: 5, borderBottomWidth: 1, borderColor: INK },
+  note: { marginTop: 4, fontSize: 9 },
+  cBank: { width: 150, paddingRight: 8 },
+  cAcct: { width: 120 },
+  total: { flexDirection: "row", paddingVertical: 5, borderBottomWidth: 1.5, borderColor: INK, fontFamily: "Helvetica-Bold" },
   cCode: { width: 84, paddingRight: 8 },
   cDesc: { flex: 1, paddingRight: 8 },
   cPeriod: { width: 90, paddingRight: 8 },
@@ -50,6 +55,7 @@ export function DnPdf({ data }: { data: DnPrintData }) {
           <View style={{ flex: 1 }}>
             <Text style={s.org}>{data.org.name}</Text>
             {data.org.address ? <Text style={s.small}>{data.org.address}</Text> : null}
+            {data.org.contact ? <Text style={s.small}>{data.org.contact}</Text> : null}
           </View>
         </View>
 
@@ -83,6 +89,10 @@ export function DnPdf({ data }: { data: DnPrintData }) {
         </View>
 
         <Text style={s.re}>RE: DEMAND FOR PAYMENT - {dn.revenueHead.toUpperCase()}</Text>
+        <View style={[s.row, { marginTop: 4 }]}>
+          <Text style={s.label}>Purpose of payment:</Text>
+          <Text style={{ flex: 1 }}>{data.purpose}</Text>
+        </View>
 
         <View style={s.table}>
           <View style={s.th}>
@@ -97,11 +107,16 @@ export function DnPdf({ data }: { data: DnPrintData }) {
             <Text style={s.cPeriod}>{dn.period ?? ""}</Text>
             <Text style={s.cAmt}>{formatAmount(dn.amountBilled)}</Text>
           </View>
+          <View style={s.subtotal}>
+            <Text style={{ flex: 1 }}>Amount billed</Text>
+            <Text style={s.cAmt}>{formatAmount(dn.amountBilled)}</Text>
+          </View>
           <View style={s.total}>
             <Text style={{ flex: 1 }}>AMOUNT OUTSTANDING</Text>
             <Text style={s.cAmt}>{formatAmount(dn.outstanding)}</Text>
           </View>
         </View>
+        {data.amountNote ? <Text style={[s.italic, s.note]}>{data.amountNote}</Text> : null}
 
         <View style={[s.row, { marginTop: 10 }]}>
           <Text style={s.label}>Amount in words:</Text>
@@ -120,6 +135,22 @@ export function DnPdf({ data }: { data: DnPrintData }) {
             <Text>{data.paymentInstructions}</Text>
           </View>
         ) : null}
+        {data.accounts.length > 0 ? (
+          <View style={{ marginTop: 6 }}>
+            <View style={s.th}>
+              <Text style={s.cBank}>Bank</Text>
+              <Text style={s.cDesc}>Account name</Text>
+              <Text style={s.cAcct}>Account number</Text>
+            </View>
+            {data.accounts.map((a) => (
+              <View key={`${a.bank}-${a.accountNumber}`} style={s.td}>
+                <Text style={s.cBank}>{a.bank}</Text>
+                <Text style={s.cDesc}>{a.accountName}</Text>
+                <Text style={s.cAcct}>{a.accountNumber}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
         {data.latePaymentNote ? (
           <View style={s.section}>
             <Text>{data.latePaymentNote}</Text>
@@ -127,9 +158,7 @@ export function DnPdf({ data }: { data: DnPrintData }) {
         ) : null}
 
         <View style={s.signature}>
-          <Text>______________________________</Text>
-          <Text style={s.bold}>{data.signatory}</Text>
-          <Text>For: {data.org.name}</Text>
+          <PdfSignature signatory={data.signatory} orgName={data.org.name} />
         </View>
 
         <Text style={s.foot} fixed>

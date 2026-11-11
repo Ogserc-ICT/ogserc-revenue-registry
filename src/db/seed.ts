@@ -20,6 +20,23 @@ import { AUDIT_ACTIONS, SYSTEM_ACTOR, writeAudit } from "@/lib/audit";
 import { EDITABLE_LISTS } from "@/lib/lists";
 import { RUNNING_SERIAL_YEAR } from "@/lib/numbering";
 
+const DEFAULT_PAYMENT_INSTRUCTIONS =
+  "Pay into one of the OGSERC accounts listed on this notice, quoting the demand notice number. " +
+  "Send evidence of payment to the OGSERC Finance & Accounts Department.";
+
+/** Workbook list values that are no longer offered (kept inactive so old records still show them). */
+const RETIRED_LIST_VALUES: Record<string, string[]> = {
+  "Collecting accounts": ["Ogun State TSA - Remita"],
+};
+
+/** "[Name], Head, Finance & Accounts" -> name "[Name]", designation "Head, Finance & Accounts". */
+function splitSignatory(line: string): { signatoryName: string; signatoryDesignation: string } {
+  const comma = line.indexOf(",");
+  return comma < 0
+    ? { signatoryName: line.trim(), signatoryDesignation: "" }
+    : { signatoryName: line.slice(0, comma).trim(), signatoryDesignation: line.slice(comma + 1).trim() };
+}
+
 type Json = Record<string, unknown>;
 
 function readSeed<T>(seedDir: string, file: string): T {
@@ -86,7 +103,7 @@ export async function seedDatabase(db: Db, options: SeedOptions): Promise<SeedRe
       .values({
         id: 1,
         orgName: String(s["Organisation name"]),
-        addressLine: String(s["Address / contact line"] ?? ""),
+        addressLine: String(s["Address / contact line"] ?? "").replace(", phone and email", ""),
         financialYear: Number(s["Financial year"]),
         receiptPrefix: String(s["Receipt number prefix"]),
         dnPrefix: String(s["Demand notice prefix"]),
@@ -97,8 +114,10 @@ export async function seedDatabase(db: Db, options: SeedOptions): Promise<SeedRe
         usdNgnRate: String(s["USD / NGN exchange rate (₦ per US$)"]),
         budgetVersionLabel: String(s["Revenue budget version"] ?? ""),
         budgetToDateRule: "including_current_month",
-        dnPaymentInstructions: String(s["Demand notice payment instructions"] ?? ""),
-        dnSignatory: String(s["Demand notice signatory"] ?? ""),
+        // Remita is no longer a collecting account (owner's decision, Nov 2026), so the workbook's
+        // "Pay through Remita into the TSA" text is replaced. Finance edits it in Receiver details.
+        dnPaymentInstructions: DEFAULT_PAYMENT_INSTRUCTIONS,
+        ...splitSignatory(String(s["Demand notice signatory"] ?? "")),
         latePaymentNote: String(s["Late payment note"] ?? ""),
       })
       .onConflictDoNothing();
@@ -110,7 +129,7 @@ export async function seedDatabase(db: Db, options: SeedOptions): Promise<SeedRe
       if (values.length === 0) continue;
       await tx
         .insert(lists)
-        .values(values.map((value, i) => ({ listName, value, sortOrder: (i + 1) * 10 })))
+        .values(values.map((value, i) => ({ listName, value, sortOrder: (i + 1) * 10, active: !RETIRED_LIST_VALUES[listName]?.includes(value) })))
         .onConflictDoNothing();
       listValues += values.length;
     }

@@ -10,6 +10,7 @@ import { RECEIPT_VALIDITY_NOTE } from "@/lib/print-text";
 import { getReceiptPrintData } from "@/lib/receipt-print";
 import { gatePage } from "@/lib/session";
 import { PrintToolbar } from "../../print-toolbar";
+import { SignatureBlock } from "../../signature-block";
 
 export const metadata: Metadata = { title: "Print receipt" };
 
@@ -62,6 +63,7 @@ export default async function PrintReceiptPage({ params }: { params: Promise<{ i
           <div className="min-w-0">
             <p className="text-[17px] font-semibold uppercase">{data.org.name}</p>
             {data.org.address && <p className="text-[12px]">{data.org.address}</p>}
+            {data.org.contact && <p className="text-[12px]">{data.org.contact}</p>}
           </div>
         </header>
 
@@ -104,10 +106,7 @@ export default async function PrintReceiptPage({ params }: { params: Promise<{ i
         </dl>
 
         <div className="relative mt-16 grid grid-cols-2 gap-8">
-          <div>
-            <p>______________________________</p>
-            <p className="mt-1">For: Finance &amp; Accounts, OGSERC</p>
-          </div>
+          <SignatureBlock signatory={data.signatory} orgName={data.org.name} />
           <div>
             <p>______________________________</p>
             <p className="mt-1">Payer / Representative</p>

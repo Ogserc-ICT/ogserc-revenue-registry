@@ -6,7 +6,8 @@ import { findNavItem, visibleNav } from "@/lib/nav";
 import { formatDnNo, formatPayerId, formatReceiptNo, parseSerial } from "@/lib/numbering";
 import { generateTempPassword, MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { can } from "@/lib/permissions";
-import { changePasswordSchema, settingsSchema } from "@/lib/validation";
+import { billedOutstandingNote, contactLine, purposeOfPayment } from "@/lib/print-text";
+import { changePasswordSchema, fieldErrors, receiverSchema, settingsSchema } from "@/lib/validation";
 
 describe("numbering formats", () => {
   it("matches the workbook formats", () => {
@@ -97,8 +98,6 @@ describe("password policy", () => {
 
 describe("settings validation and diff", () => {
   const valid = {
-    orgName: "OGSERC",
-    addressLine: "",
     financialYear: "2026",
     receiptPrefix: "OGSERC/RCT",
     dnPrefix: "OGSERC/DN",
@@ -109,9 +108,6 @@ describe("settings validation and diff", () => {
     usdNgnRate: "1500",
     budgetVersionLabel: "",
     budgetToDateRule: "including_current_month",
-    dnPaymentInstructions: "",
-    dnSignatory: "",
-    latePaymentNote: "",
   };
   it("coerces form values and maps a blank as-at date to null", () => {
     const r = settingsSchema.parse(valid);
@@ -131,5 +127,46 @@ describe("settings validation and diff", () => {
       asAtDate: { old: "2026-11-02", new: null },
       orgName: { old: "A", new: "B" },
     });
+  });
+});
+
+describe("demand notice wording", () => {
+  it("writes the purpose of payment from the head and period", () => {
+    expect(purposeOfPayment("Operating levy (1.5%)", "Q3 2026")).toBe("Operating levy (1.5%) for Q3 2026");
+    expect(purposeOfPayment("Registration fee - Category F", "  ")).toBe("Registration fee - Category F");
+  });
+
+  it("explains billed vs outstanding without listing payments", () => {
+    expect(billedOutstandingNote("60000000", "15000000.00", "02-Nov-2026")).toMatch(/less payments confirmed by OGSERC up to 02-Nov-2026/);
+    expect(billedOutstandingNote("500000", "500000.00", "02-Nov-2026")).toMatch(/^No payment against this notice/);
+    expect(billedOutstandingNote("500000", "0.00", "02-Nov-2026")).toMatch(/paid in full/);
+  });
+
+  it("builds the letterhead contact line from what is filled in", () => {
+    expect(contactLine(" 0803 000 0000 ", "info@ogserc.og.gov.ng")).toBe("Tel: 0803 000 0000  ·  Email: info@ogserc.og.gov.ng");
+    expect(contactLine("", "")).toBe("");
+  });
+});
+
+describe("receiver details validation", () => {
+  const valid = {
+    orgName: "OGSERC",
+    addressLine: "",
+    orgPhone: "",
+    orgEmail: "",
+    paymentAccounts: [{ bank: "Example Bank", accountName: "OGSERC Revenue Account", accountNumber: "0123 456 789" }],
+    dnPaymentInstructions: "",
+    latePaymentNote: "",
+    signatoryName: "",
+    signatoryDesignation: "",
+  };
+  it("accepts a valid set and blank optional fields", () => {
+    expect(receiverSchema.safeParse(valid).success).toBe(true);
+  });
+  it("flags each bad account field on its own row", () => {
+    const r = receiverSchema.safeParse({ ...valid, orgEmail: "nope", paymentAccounts: [valid.paymentAccounts[0], { bank: "", accountName: "X", accountNumber: "12A" }] });
+    expect(r.success).toBe(false);
+    const errs = fieldErrors(r.error!);
+    expect(errs).toMatchObject({ orgEmail: expect.any(String), "paymentAccounts.1.bank": "Enter the bank name.", "paymentAccounts.1.accountNumber": expect.stringMatching(/digits only/) });
   });
 });

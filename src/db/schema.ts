@@ -90,6 +90,13 @@ export const signInAttempts = pgTable(
 
 // ---------- Settings, serials, lists ----------
 
+/** A bank account payers can pay into, printed on demand notices. */
+export interface PaymentAccount {
+  bank: string;
+  accountName: string;
+  accountNumber: string;
+}
+
 export const settings = pgTable(
   "settings",
   {
@@ -108,8 +115,13 @@ export const settings = pgTable(
     budgetToDateRule: budgetToDateRuleEnum("budget_to_date_rule")
       .notNull()
       .default("including_current_month"),
+    // Receiver (OGSERC) details printed on demand notices and receipts; Finance keeps them current.
+    orgPhone: text("org_phone").notNull().default(""),
+    orgEmail: text("org_email").notNull().default(""),
+    paymentAccounts: jsonb("payment_accounts").$type<PaymentAccount[]>().notNull().default([]),
     dnPaymentInstructions: text("dn_payment_instructions").notNull().default(""),
-    dnSignatory: text("dn_signatory").notNull().default(""),
+    signatoryName: text("signatory_name").notNull().default(""),
+    signatoryDesignation: text("signatory_designation").notNull().default(""),
     latePaymentNote: text("late_payment_note").notNull().default(""),
     updatedAt: tstz("updated_at").notNull().defaultNow(),
   },
