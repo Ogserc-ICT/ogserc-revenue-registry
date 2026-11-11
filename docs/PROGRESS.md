@@ -141,6 +141,56 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
+## Adjustments before Phase 6 (branch `feature/adjustments`, awaiting review)
+
+Requested by the owner after Phase 5, 10–11 Nov 2026. Browser checks wait for the new Neon dev database.
+
+### What was built
+- **Amount fields** add thousands separators as you type, keeping the caret in place (`MoneyInput`, `src/lib/money-input.ts`). This covers Override amount due, Amount paid, quantities, rates, caps, budgets and statement totals. The server strips the commas.
+- **Dropdowns**: long lists (payer category, LGA, Schedule 3, payer filters) are searchable. Schedule 3 shows the full description. The Register and Demand notices payer filters list each payer once, under their current name.
+- **Payers**: address and capacity are required when adding, editing and importing by CSV. Capacity 0 means "no generating capacity".
+- **Registration is a one-off payment.** Once a payer's confirmed or pending registration receipts cover their Schedule 3 fee, another registration receipt is blocked. The message says the payer has already registered and gives the receipt numbers. Part payments are allowed until the fee is covered. Reversed receipts don't count, and an edit doesn't count against itself.
+- **Revenue head picker** (New receipt, New demand notice) shows two fields under the head: *What it stands for* and *Fee to be paid*. Both come from the fee schedule (applies to, legal basis, rate, unit, frequency), which was already filled from the workbook, so Finance keeps them current by editing the head.
+- **Receiver details** (`/admin/receiver-details`, Admin and Finance Officer) hold the organisation name, office address, phone and email, the bank accounts for payment, the demand notice text and the signatory's name and designation. These fields moved out of the Admin-only Settings tab. Every save is audited with old and new values.
+- **Demand notice** (HTML and PDF):
+  - letterhead with address, phone and email;
+  - payer name and address;
+  - *Purpose of payment*, written from the revenue head and period;
+  - *Amount billed*, then *AMOUNT OUTSTANDING*, with a short note on why they differ;
+  - the bank accounts to pay into, under the payment instructions;
+  - the "Less: confirmed payments received to date" line is gone.
+- **Signature block** on demand notices and official receipts: signature line, name, designation, then "For:" and the organisation name.
+- **Payer form** suggests a Schedule 3 category from the payer category. It fills only an empty or still-suggested field.
+
+### Migrations
+- `0003_receiver_details`: adds phone, email, payment accounts, signatory name and designation. It copies the old one-line signatory into name and designation (split at the first comma) and sets the "Ogun State TSA - Remita" collecting account inactive.
+- `0004_drop_dn_signatory`: drops the old signatory column.
+
+### Checks run
+- `pnpm lint`, `pnpm typecheck`, `pnpm test` (154 tests) and `pnpm build` pass.
+- New tests cover money typing, the registration block (covered, part-paid, reversed, edit), the head info text, purpose and note wording, receiver validation, the Schedule 3 suggestion, the seed (signatory split, Remita inactive), and migration 0003 run on a database with old data.
+- The demand notice and receipt PDFs were rendered from sample data and read back.
+
+### Decisions
+| Decision | Why |
+|---|---|
+| Address and capacity are required everywhere, including CSV import; 0 MW is allowed | Owner's answer (items 1 and 2). |
+| A second registration receipt is blocked once the fee is covered; part payments are allowed | Owner's answer (item 3). Uses the same "covered" test as BUILD_SPEC 4.6 (paid ≥ fee). |
+| "What it stands for" = head name plus *Applies to*, with the legal basis underneath | The workbook has no separate description column, and *Applies to* says who the head is for. Finance can edit it in the fee schedule. |
+| Receiver details are a separate page that Finance can edit | Owner asked for Finance to keep them current. The rest of Settings (prefixes, FX, as-at date) stays Admin-only. |
+| Remita is retired as a collecting account, kept inactive | Owner's answer (item 6). Old receipts and bank recon still show it. The default payment instructions no longer mention Remita. |
+| Bank accounts are entered in Receiver details and start empty | The owner will supply the two account details. Until then notices print the instructions only. |
+| One signatory for both notices and receipts | Owner's answer (item 9: same block). Say if receipts need a different signatory. |
+| The notice note: "less payments confirmed by OGSERC up to …", "no payment … confirmed", or "paid in full"; none on a cancelled notice | Owner's answer (item 8: both figures with a short note). |
+| Schedule 3 suggestion: DisCo A, Integrated Utility B, Mini-grid E, distribution, embedded distribution and supply/trading F, private networks G, metering H, franchisees J. Generation and captive go by capacity: C from 10 MW, D from 1 MW, captive from 200 kW I, other generation below 1 MW K | Read from the Schedule 3 descriptions. It is a suggestion only. Please check the mapping. |
+
+### Still open
+- Which revenue heads have a fixed fee and which don't (owner to list).
+- Account details for the two remaining collecting accounts.
+- Further payer details on the notice, if needed.
+- Macro adjustments (owner to describe).
+- New Neon project (owned by ictogserc@gmail.com) with `main` for production and `dev` for development; migrate and seed `dev` with sample data, then run the browser checks.
+
 ## Phase 5: Reports (complete, awaiting review)
 
 Built 9 Nov 2026. Report rules checked against the workbook's Dashboard, Budget vs Actual, Monthly Summary, Arrears and Bank Recon formulas.
