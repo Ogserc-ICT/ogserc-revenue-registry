@@ -197,6 +197,9 @@ Requested by the owner after Phase 5, 10–11 Nov 2026. Checked in the browser o
 | The notice note: "less payments confirmed by OGSERC up to …", "no payment … confirmed", or "paid in full"; none on a cancelled notice | Owner's answer (item 8: both figures with a short note). |
 | Schedule 3 suggestion: DisCo A, Integrated Utility B, Mini-grid E, distribution, embedded distribution and supply/trading F, private networks G, metering H, franchisees J. Generation and captive go by capacity: C from 10 MW, D from 1 MW, captive from 200 kW I, other generation below 1 MW K | Read from the Schedule 3 descriptions. It is a suggestion only. Please check the mapping. |
 
+### Plan (owner, 11 Nov 2026)
+Phase 6 is on hold. Further adjustments stay on `feature/adjustments` until the Finance team supplies the details below. The branch isn't merged until then.
+
 ### Still open
 - Receipt signatory, if receipts need a different one from notices (owner to confirm).
 - Payer categories with no Schedule 3 suggestion yet (owner to list).
