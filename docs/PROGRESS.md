@@ -201,12 +201,16 @@ Requested by the owner after Phase 5, 10–11 Nov 2026. Checked in the browser o
 - Receipt signatory, if receipts need a different one from notices (owner to confirm).
 - Payer categories with no Schedule 3 suggestion yet (owner to list).
 - New receipt adjustments (owner to describe).
-- Point Vercel's Preview environment at the Neon `dev` branch.
 - Which revenue heads have a fixed fee and which don't (owner to list).
 - Account details for the two remaining collecting accounts.
 - Further payer details on the notice, if needed.
 - Macro adjustments (owner to describe).
 - Neon `main` (production) stays empty until Phase 6.
+
+### Environments
+- **Local:** `.env.local` points at the Neon `dev` branch.
+- **Vercel Preview** (every branch except `main`): its own `DATABASE_URL` (Neon `dev`), `AUTH_SECRET`, `AUTH_URL` (the branch address, currently `feature/adjustments`) and `APP_ENV=preview`. Working since 11 Nov 2026. A new branch needs `AUTH_URL` changed to its own address.
+- **Vercel Production** (`main`): still the colleague's old database until Phase 6, when it moves to Neon `main` under ictogserc@gmail.com.
 
 ## Phase 5: Reports (complete, awaiting review)
 
