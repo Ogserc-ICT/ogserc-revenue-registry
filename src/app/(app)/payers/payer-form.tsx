@@ -3,16 +3,17 @@
 import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Checkbox, describedBy, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/field";
 import { MoneyInput } from "@/components/ui/money-input";
 import { ComboSelect } from "@/components/ui/combo-select";
-import type { ComboOption } from "@/components/ui/combobox";
+import { type ComboOption, Combobox } from "@/components/ui/combobox";
 import { SectionHeading } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { useFormAction } from "@/components/ui/use-form-action";
 import { NEAR_MATCH_LABELS } from "@/lib/payer-names";
+import { suggestSch3Category } from "@/lib/registration";
 import { savePayerAction } from "./actions";
 
 export interface PayerFormValues {
@@ -90,6 +91,22 @@ export function PayerForm({
   );
   const asOptions = (values: string[]): ComboOption[] => values.map((v) => ({ value: v, label: v }));
 
+  // Schedule 3 is suggested from the payer category (and capacity, for generation). The
+  // suggestion only fills an empty or still-suggested field; a category the officer picked stays.
+  const [category, setCategory] = useState(initial.category);
+  const [capacity, setCapacity] = useState(initial.capacityMw);
+  const [sch3, setSch3] = useState(initial.sch3Category);
+  const sch3Suggested = useRef(initial.sch3Category === "");
+  const suggestion = suggestSch3Category(category, capacity);
+  const resuggest = (nextCategory: string, nextCapacity: string) => {
+    const next = suggestSch3Category(nextCategory, nextCapacity);
+    if (sch3Suggested.current && next) setSch3(next);
+  };
+  const sch3Hint =
+    suggestion && suggestion !== sch3
+      ? `Suggested for this payer category: ${suggestion}. Sets the registration fee and late-charge group.`
+      : "Sets the registration fee and late-charge group.";
+
   const select = (name: keyof PayerFormValues, values: string[], blank: string) => (
     <Select {...text(name)}>
       <option value="">{blank}</option>
@@ -126,7 +143,19 @@ export function PayerForm({
             <Input {...text("name", "The registered company name. It must be unique.")} autoComplete="off" data-autofocus required />
           </Field>
           <Field label="Payer category" htmlFor="category" error={e?.category}>
-            {combo("category", asOptions(options.categories), "Search payer categories")}
+            <Combobox
+              id="category"
+              name="category"
+              value={category}
+              onChange={(v) => {
+                setCategory(v);
+                resuggest(v, capacity);
+              }}
+              options={asOptions(options.categories)}
+              placeholder="Search payer categories"
+              invalid={Boolean(e?.category)}
+              describedById={e?.category ? "category-error" : undefined}
+            />
           </Field>
           <Field label="Licence status" htmlFor="licenceStatus" error={e?.licenceStatus}>
             {select("licenceStatus", options.licenceStatuses, "Not set")}
@@ -149,16 +178,24 @@ export function PayerForm({
           <Field
             label="Schedule 3 category"
             htmlFor="sch3Category"
-            hint="Sets the registration fee and late-charge group."
+            hint={sch3Hint}
             error={e?.sch3Category}
           >
-            {combo(
-              "sch3Category",
+            <Combobox
+              id="sch3Category"
+              name="sch3Category"
+              value={sch3}
+              onChange={(v) => {
+                setSch3(v);
+                // Clearing the field hands it back to the suggestion.
+                sch3Suggested.current = v === "";
+              }}
               // The full description, not cut short, so each category can be told apart.
-              options.sch3.map(([cat, label]) => ({ value: cat, label: `${cat} — ${label}` })),
-              "Search by letter or description",
-              "Sets the registration fee and late-charge group.",
-            )}
+              options={options.sch3.map(([cat, label]) => ({ value: cat, label: `${cat} — ${label}` }))}
+              placeholder="Search by letter or description"
+              invalid={Boolean(e?.sch3Category)}
+              describedById={e?.sch3Category ? "sch3Category-error" : "sch3Category-hint"}
+            />
           </Field>
           <Field
             label="Expected registration month"
@@ -183,7 +220,18 @@ export function PayerForm({
             hint="Picks the band for MW band fees. Enter 0 if the payer has no generating capacity."
             error={e?.capacityMw}
           >
-            <MoneyInput {...text("capacityMw", "hint")} dp={3} required />
+            <MoneyInput
+              {...describedBy("capacityMw", e?.capacityMw, "hint")}
+              id="capacityMw"
+              name="capacityMw"
+              value={capacity}
+              onValueChange={(v) => {
+                setCapacity(v);
+                resuggest(category, v);
+              }}
+              dp={3}
+              required
+            />
           </Field>
           <Field
             label={"Revenue base (₦)"}
