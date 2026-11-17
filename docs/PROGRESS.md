@@ -143,7 +143,7 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 
 ## Phase 6, part 1: hardening (branch `feature/adjustments`, in progress)
 
-Started 17 Nov 2026. Going live (new Vercel project, Neon `main` as production, the first real Admin, merging to `main`) waits for Finance's details and the owner's go-ahead.
+Started 17 Nov 2026. Going live waits for Finance's details and the owner's go-ahead. It **reuses the existing Vercel project** `ogserc-revenue-registry`, which is already in the Commission's Pro team. The steps: set its Production variables to Neon `main` (with its own `AUTH_SECRET` and `AUTH_URL`, and `APP_ENV=production`), migrate and `pnpm seed` `main` without samples, create the first Admin, set the backup secrets, and merge to `main`.
 
 ### What was built
 - **Sign-in lockout** (BUILD_SPEC 7.2):
