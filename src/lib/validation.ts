@@ -372,6 +372,14 @@ export const receiptFilterSchema = z.object({
 
 export type ReceiptFilters = z.output<typeof receiptFilterSchema>;
 
+// R&E payments register (REVENUE-REGISTRY-CONTRACT.md).
+export const handoverFilterSchema = z.object({
+  q: z.string().trim().max(100).optional().catch(undefined),
+  batch: z.string().trim().max(40).optional().catch(undefined),
+  type: z.enum(["Payment", "Reversal"]).optional().catch(undefined),
+  page: z.coerce.number().int().min(1).default(1).catch(1),
+});
+
 // ---------- Bank recon ----------
 
 export const statementTotalSchema = z.object({

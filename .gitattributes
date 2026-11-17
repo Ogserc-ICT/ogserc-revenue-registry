@@ -1,2 +1,4 @@
 * text=auto eol=lf
 *.png binary
+# Test fixtures are compared byte for byte; never convert their line endings.
+tests/fixtures/** -text

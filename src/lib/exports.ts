@@ -7,10 +7,11 @@ import { MONTH_LABELS } from "./budget";
 import { listDemandNotices } from "./dn-service";
 import { addSheet, newWorkbook, type SheetColumn } from "./excel";
 import type { Capability } from "./permissions";
+import { linesWhere as handoverLinesWhere } from "./handover-service";
 import { receiptWhere } from "./receipt-service";
 import { arrears, bankRecon, budgetVsActual, monthlySummary, OPEN_BUCKETS } from "./reports-service";
 import { getAsAt, getSettings } from "./settings-server";
-import { dnFilterSchema, receiptFilterSchema } from "./validation";
+import { dnFilterSchema, handoverFilterSchema, receiptFilterSchema } from "./validation";
 
 /*
  * Excel exports (BUILD_SPEC 5 and 6). Each one names the capability needed to download it; the
@@ -70,6 +71,43 @@ async function exportRegister(q: URLSearchParams): Promise<ExportResult> {
   const wb = newWorkbook("Register");
   addSheet(wb, "Register", cols, rows);
   return { workbook: wb, filename: `OGSERC-Register-${stamp()}.xlsx`, rows: rows.length };
+}
+
+/** R&E payments: every line as received, with the contract's column names (REVENUE-REGISTRY-CONTRACT.md §4.1). */
+async function exportRePayments(q: URLSearchParams): Promise<ExportResult> {
+  const f = handoverFilterSchema.parse(params(q));
+  const rows = await db.select().from(t.handoverLines).where(handoverLinesWhere(f)).orderBy(desc(t.handoverLines.batchNo), asc(t.handoverLines.lineId));
+  type R = (typeof rows)[number];
+  const cols: SheetColumn<R>[] = [
+    { header: "Line ID", width: 26, value: (r) => r.lineId },
+    { header: "Line type", width: 10, value: (r) => r.lineType },
+    { header: "PAY no.", width: 24, value: (r) => r.payNo },
+    { header: "Batch no.", width: 22, value: (r) => r.batchNo },
+    { header: "Date received", type: "date", width: 13, value: (r) => r.dateReceived },
+    { header: "Date confirmed", type: "date", width: 13, value: (r) => r.dateConfirmed },
+    { header: "Amount (₦)", type: "money", width: 16, value: (r) => r.amount },
+    { header: "Purpose", width: 24, value: (r) => r.purpose },
+    { header: "Revenue code", width: 12, value: (r) => r.revenueCode },
+    { header: "Channel", width: 14, value: (r) => r.channel },
+    { header: "RRR", width: 16, value: (r) => r.rrr },
+    { header: "Payer", width: 34, value: (r) => r.payer },
+    { header: "Paid for", width: 20, value: (r) => r.paidFor },
+    { header: "Filing type", width: 20, value: (r) => r.filingType },
+    { header: "ACK no.", width: 24, value: (r) => r.ackNo },
+    { header: "Registration no. / OUN", width: 28, value: (r) => r.registrationNo },
+    { header: "Category", width: 9, value: (r) => r.category },
+    { header: "LGA", width: 16, value: (r) => r.lga },
+    { header: "Recorded by", width: 22, value: (r) => r.recordedBy },
+    { header: "Confirmed by", width: 22, value: (r) => r.confirmedBy },
+    { header: "Verified with bank", width: 10, value: (r) => r.verifiedWithBank },
+    { header: "Reversed on", type: "date", width: 13, value: (r) => r.reversedOn },
+    { header: "Reversed by", width: 22, value: (r) => r.reversedBy },
+    { header: "Reversal reason", width: 30, value: (r) => r.reversalReason },
+    { header: "Imported at", type: "datetime", width: 18, value: (r) => r.importedAt },
+  ];
+  const wb = newWorkbook("R&E payments");
+  addSheet(wb, "R&E payments", cols, rows);
+  return { workbook: wb, filename: `OGSERC-RE-payments-${stamp()}.xlsx`, rows: rows.length };
 }
 
 async function exportDemandNotices(q: URLSearchParams): Promise<ExportResult> {
@@ -241,6 +279,33 @@ async function exportEverything(): Promise<ExportResult> {
     ["receipts", db.select().from(t.receipts).orderBy(asc(t.receipts.receiptNo))],
     ["bank_statement_totals", db.select().from(t.bankStatementTotals)],
     ["revenue_budget", db.select().from(t.revenueBudget).orderBy(asc(t.revenueBudget.financialYear), asc(t.revenueBudget.budgetLineId), asc(t.revenueBudget.month))],
+    [
+      "handover_batches",
+      // Without the stored file itself; download it from R&E payments.
+      db
+        .select({
+          batchNo: t.handoverBatches.batchNo,
+          checksum: t.handoverBatches.checksum,
+          formatVersion: t.handoverBatches.formatVersion,
+          preparedAt: t.handoverBatches.preparedAt,
+          preparedBy: t.handoverBatches.preparedBy,
+          confirmedFrom: t.handoverBatches.confirmedFrom,
+          confirmedTo: t.handoverBatches.confirmedTo,
+          paymentLines: t.handoverBatches.paymentLines,
+          reversalLines: t.handoverBatches.reversalLines,
+          paymentTotal: t.handoverBatches.paymentTotal,
+          reversalTotal: t.handoverBatches.reversalTotal,
+          netTotal: t.handoverBatches.netTotal,
+          linesAdded: t.handoverBatches.linesAdded,
+          linesSkipped: t.handoverBatches.linesSkipped,
+          fileName: t.handoverBatches.fileName,
+          importedAt: t.handoverBatches.importedAt,
+          importedBy: t.handoverBatches.importedBy,
+        })
+        .from(t.handoverBatches)
+        .orderBy(asc(t.handoverBatches.batchNo)),
+    ],
+    ["handover_lines", db.select().from(t.handoverLines).orderBy(asc(t.handoverLines.lineId))],
     ["audit_log", db.select().from(t.auditLog).orderBy(asc(t.auditLog.id))],
   ];
   let total = 0;
@@ -275,5 +340,6 @@ export const EXPORTS: Record<string, ExportDef> = {
   "monthly-summary.xlsx": { capability: "reports.view", build: exportMonthlySummary },
   "arrears.xlsx": { capability: "reports.view", build: () => exportArrears() },
   "bank-recon.xlsx": { capability: "bankRecon.view", build: exportBankRecon },
+  "re-payments.xlsx": { capability: "handover.view", build: (q) => exportRePayments(q) },
   "everything.xlsx": { capability: "data.manage", build: () => exportEverything() },
 };

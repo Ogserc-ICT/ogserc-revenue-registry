@@ -31,7 +31,8 @@ export interface HandoverReport {
 
 class DryRunRollback extends Error {}
 
-export const MAX_HANDOVER_BYTES = 5_000_000;
+/** Under Next's 1 MB server-action body limit. A batch of a few thousand lines is well inside it. */
+export const MAX_HANDOVER_BYTES = 900_000;
 
 export async function importHandover(
   db: Db,
@@ -175,7 +176,7 @@ export interface HandoverFilters {
   page: number;
 }
 
-function linesWhere(f: HandoverFilters): SQL | undefined {
+export function linesWhere(f: Omit<HandoverFilters, "page">): SQL | undefined {
   const parts: (SQL | undefined)[] = [];
   if (f.batch) parts.push(eq(handoverLines.batchNo, f.batch));
   if (f.type) parts.push(eq(handoverLines.lineType, f.type));

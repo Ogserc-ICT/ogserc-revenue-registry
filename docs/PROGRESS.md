@@ -141,6 +141,58 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
+## R&E payment handover import (branch `feature/adjustments`, awaiting review)
+
+Built 17 Nov 2026 from `REVENUE-REGISTRY-CONTRACT.md` (format version 1), the contract agreed with the Registration & Evaluation (R&E) app, and R&E's sample batches. The two apps share nothing but the batch file (BUILD_SPEC 12 still holds).
+
+### What was built
+- **R&E payments** (`/re-payments`, in Daily work). Everyone who can see the Register can see it. Admin and Finance Officer can import.
+  - Upload the batch `.xlsx`. You see the batch number, who prepared it, the line counts, the net total and each line ("Will add" or "Already held"). Nothing is saved until you choose Import.
+  - A refused file shows every reason and imports nothing.
+  - The batches table lists each batch with who imported it and when, and a link to download the original file (audited).
+  - The lines list can be filtered by text, batch and line type, and exported to Excel with the contract's column names. A payment that has been reversed is marked "Payment, reversed". Its reversal is its own negative line.
+- **Import rules** (contract §5), all in one transaction:
+  - both sheets and every header present, and format version 1;
+  - totals and the SHA-256 checksum match the Batch sheet;
+  - each line: Line ID = PAY no. + `:P`/`:R`, naira × 100 = kobo, payments positive and reversals negative, the batch number matches, and dates are text `YYYY-MM-DD`;
+  - the same batch with the same checksum: "already imported", nothing changes;
+  - the same batch with a different checksum: refused;
+  - lines already held with the same amount are skipped, with a different amount the file is refused;
+  - a reversal whose payment isn't held: "Import the earlier batch first";
+  - a warning (no refusal) when the previous batch of the year hasn't been imported;
+  - one "R&E handover imported" audit entry per batch.
+- **Storage:** `handover_batches` and `handover_lines` (migration 0005), append-only by trigger. Line IDs and batch numbers are primary keys. Amounts are `NUMERIC(18,2)`, computed exactly from the kobo figure. The uploaded file is kept in Postgres with its batch.
+- **Export everything** now includes both tables (without the stored files).
+
+### Checks run
+- `pnpm lint`, `pnpm typecheck`, `pnpm test` (173 tests) and `pnpm build` pass. Migration 0005 is applied to Neon `dev`.
+- 18 new tests use R&E's sample files (copied into `tests/fixtures/handover/`), including the contract's §9 plan:
+  - batch 1;
+  - batch 1 again ("already imported");
+  - batch 2, with the reversal accepted;
+  - an edited batch 2 (refused).
+
+  Net totals: 77,500,000 and 35,000,000 kobo, as the contract states.
+
+### Decisions
+| Decision | Why |
+|---|---|
+| R&E payments are their own register, not RR receipts, and not counted in revenue reports yet | Owner's choice. Their revenue codes are blank until Finance answers Q29. Counting them now would risk double counting and wrong budget lines. |
+| Admin and Finance Officer import; everyone with Register access can view | Owner's choice. Finance prepares the batches in R&E. |
+| Files only; no direct feed (contract §8) for now | Owner's choice. Reconsider after real batches have been used. |
+| CSV copies are refused | The CSV has no Batch sheet, so totals and checksum can't be checked, and §5 step 1 requires both sheets. |
+| The uploaded file is stored in Postgres, not Vercel Blob | CLAUDE.md rule 8: no Vercel-only storage. Batch files are a few KB. |
+| A number in a date column is refused like an Excel date | The contract wants dates as text. A date cell without date formatting reads back as a bare number (e.g. 46342). |
+| The batch number is parsed only for the "previous batch missing" warning | The contract recommends the warning but otherwise treats identifiers as opaque. |
+
+### For R&E (contract Q30)
+RR can do everything in §4 and §5, except keeping the file in Vercel Blob; it's kept in RR's Postgres instead. RR doesn't want the direct feed (§8) yet.
+
+### Still open
+- Q29 (Finance): revenue codes per purpose, and whether "Fee and late charge" is split. Once known, decide how R&E payments count in the revenue reports.
+- Finance must stop recording registration payments as RR receipts once R&E takes them, or they'll be counted twice.
+- Browser checks of `/re-payments`.
+
 ## Adjustments before Phase 6 (branch `feature/adjustments`, awaiting review)
 
 Requested by the owner after Phase 5, 10–11 Nov 2026. Checked in the browser on the new Neon project's `dev` branch (owned by ictogserc@gmail.com), migrated to 0004 and seeded with sample data.
