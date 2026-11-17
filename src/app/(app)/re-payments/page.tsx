@@ -7,7 +7,7 @@ import { type Column, DataTable, Pagination } from "@/components/ui/data-table";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Card, EmptyState, PageHeader, SectionHeading, StatusPill } from "@/components/ui/misc";
 import { db } from "@/db";
-import { formatDate, formatDateTime } from "@/lib/dates";
+import { formatDate, formatDateTime, isIsoDate } from "@/lib/dates";
 import { HANDOVER_PAGE_SIZE, listHandoverBatches, listHandoverLines } from "@/lib/handover-service";
 import { formatAmount } from "@/lib/money";
 import { can } from "@/lib/permissions";
@@ -18,6 +18,9 @@ import { HandoverImportPanel } from "./import-panel";
 export const metadata: Metadata = { title: "R&E payments" };
 
 type Search = Record<string, string | string[] | undefined>;
+
+/** "−₦150,000.00" rather than "₦-150,000.00". */
+const signedNaira = (v: string) => (v.trim().startsWith("-") ? `−₦${formatAmount(v.trim().slice(1))}` : `₦${formatAmount(v)}`);
 type Line = Awaited<ReturnType<typeof listHandoverLines>>["rows"][number];
 type Batch = Awaited<ReturnType<typeof listHandoverBatches>>[number];
 
@@ -46,7 +49,17 @@ export default async function RePaymentsPage({ searchParams }: { searchParams: P
   };
 
   const lineColumns: Column<Line>[] = [
-    { key: "pay", header: "PAY no.", mobile: true, cell: (r) => <span className="money whitespace-nowrap">{r.payNo}</span> },
+    {
+      key: "pay",
+      header: "PAY no. / batch",
+      mobile: true,
+      cell: (r) => (
+        <>
+          <span className="money whitespace-nowrap">{r.payNo}</span>
+          <span className="money block text-sm whitespace-nowrap text-muted">{r.batchNo}</span>
+        </>
+      ),
+    },
     {
       key: "type",
       header: "Line",
@@ -60,8 +73,16 @@ export default async function RePaymentsPage({ searchParams }: { searchParams: P
           <StatusPill tone="emerald">Payment</StatusPill>
         ),
     },
-    { key: "received", header: "Received", cell: (r) => <span className="whitespace-nowrap">{formatDate(r.dateReceived)}</span> },
-    { key: "confirmed", header: "Confirmed", cell: (r) => <span className="whitespace-nowrap">{formatDate(r.dateConfirmed)}</span> },
+    {
+      key: "dates",
+      header: "Received",
+      cell: (r) => (
+        <>
+          <span className="whitespace-nowrap">{formatDate(r.dateReceived)}</span>
+          <span className="block text-sm whitespace-nowrap text-muted">Confirmed {formatDate(r.dateConfirmed)}</span>
+        </>
+      ),
+    },
     {
       key: "payer",
       header: "Payer",
@@ -93,7 +114,6 @@ export default async function RePaymentsPage({ searchParams }: { searchParams: P
         </>
       ),
     },
-    { key: "batch", header: "Batch", cell: (r) => <span className="money text-sm whitespace-nowrap">{r.batchNo}</span> },
     {
       key: "amount",
       header: "Amount (₦)",
@@ -114,7 +134,17 @@ export default async function RePaymentsPage({ searchParams }: { searchParams: P
         </Link>
       ),
     },
-    { key: "prepared", header: "Prepared", cell: (b) => [b.preparedAt?.slice(0, 10), b.preparedBy].filter(Boolean).join(" · ") || "—" },
+    {
+      key: "prepared",
+      header: "Prepared",
+      cell: (b) => (
+        <>
+          {/* Prepared at is ISO text with the Lagos offset; its date part is the Lagos date. */}
+          <span className="whitespace-nowrap">{isIsoDate(b.preparedAt?.slice(0, 10) ?? "") ? formatDate(b.preparedAt!.slice(0, 10)) : (b.preparedAt ?? "—")}</span>
+          {b.preparedBy && <span className="block text-sm text-muted">{b.preparedBy}</span>}
+        </>
+      ),
+    },
     {
       key: "lines",
       header: "Lines",
@@ -174,11 +204,11 @@ export default async function RePaymentsPage({ searchParams }: { searchParams: P
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted">Reversals</p>
-          <p className="money mt-2 text-lg font-semibold text-rose-text">₦{formatAmount(totals.reversals)}</p>
+          <p className="money mt-2 text-lg font-semibold text-rose-text">{signedNaira(totals.reversals)}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted">Net</p>
-          <p className="money mt-2 text-lg font-semibold">₦{formatAmount(totals.net)}</p>
+          <p className="money mt-2 text-lg font-semibold">{signedNaira(totals.net)}</p>
           <p className="mt-1 text-sm text-muted">
             {totals.count} {totals.count === 1 ? "line" : "lines"}
           </p>

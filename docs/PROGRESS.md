@@ -174,6 +174,15 @@ Built 17 Nov 2026 from `REVENUE-REGISTRY-CONTRACT.md` (format version 1), the co
 
   Net totals: 77,500,000 and 35,000,000 kobo, as the contract states.
 
+- Browser checks on Neon `dev` as a temporary QA Finance account. R&E's two sample batches were imported in the contract's order.
+  - The CSV copy and batch 2 before batch 1 were refused with their reasons.
+  - Batch 1 was imported (4 lines), then imported again ("already imported").
+  - An edited batch 2 was refused as altered, then the real batch 2 was imported (reversal accepted).
+  - A made-up reversal of an unknown payment got "Import the earlier batch first". A made-up batch 0004, previewed only, showed the missed-batch warning.
+  - Refusals and previews wrote nothing. Net ₦1,125,000.00 across both batches. The original file downloads byte for byte. The Excel export has all 6 lines. There's one audit entry per batch, and downloads are audited.
+  - No browser errors or sideways scroll in dark and light mode at 375 and 1440px. The lines table was slimmed so the amount stays in view at 1440px.
+- **`dev` now holds R&E's two SAMPLE batches (6 lines, all payer names start with "SAMPLE").** Handover tables are append-only, so they stay. They never reach production, which gets a fresh database in Phase 6. QA Finance is deactivated again.
+
 ### Decisions
 | Decision | Why |
 |---|---|
@@ -195,7 +204,6 @@ RR can do everything in §4 and §5, except keeping the file in Vercel Blob; it'
 ### Still open
 - Q29 (Finance): revenue codes per purpose, and whether "Fee and late charge" is split. Once known, decide how R&E payments count in the revenue reports.
 - Finance must stop recording registration payments as RR receipts once R&E takes them, or they'll be counted twice.
-- Browser checks of `/re-payments`.
 
 ## Adjustments before Phase 6 (branch `feature/adjustments`, awaiting review)
 
