@@ -1,6 +1,9 @@
 import ExcelJS from "exceljs";
 import { type Cell, HandoverFileError, type HandoverSheets } from "./handover";
 
+const MAX_ROWS = 20_000;
+const MAX_COLUMNS = 100;
+
 /** Plain value of an ExcelJS cell: rich text and hyperlinks become text, formulas their result. */
 function plain(v: ExcelJS.CellValue): Cell {
   if (v === null || v === undefined) return null;
@@ -47,6 +50,14 @@ export async function readHandoverWorkbook(fileName: string, bytes: Uint8Array):
     throw new HandoverFileError("This isn't a handover file the Revenue Register can read.", [
       `The workbook has no ${missing.join(" or ")} sheet.`,
     ]);
+  }
+  // A batch is a few hundred lines at most. Refuse an oversized sheet before reading every cell.
+  for (const ws of [payments!, batch!]) {
+    if (ws.rowCount > MAX_ROWS || ws.columnCount > MAX_COLUMNS) {
+      throw new HandoverFileError("This file is far larger than a handover batch, so it wasn't read.", [
+        `The ${ws.name} sheet has ${ws.rowCount} rows and ${ws.columnCount} columns; a batch has at most ${MAX_ROWS} rows and ${MAX_COLUMNS} columns.`,
+      ]);
+    }
   }
   return { payments: sheetCells(payments!), batch: sheetCells(batch!) };
 }

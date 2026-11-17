@@ -160,6 +160,13 @@ describe("reading a handover file (contract §4, §5 steps 1-3)", () => {
     expect((await parse(extra)).ignoredColumns).toEqual(["Branch"]);
   });
 
+  it("refuses a sheet far larger than any batch before reading it", async () => {
+    const big = await variant(1, (wb) => {
+      wb.getWorksheet("Payments")!.getRow(20_005).getCell(1).value = "x";
+    });
+    expect(allText(await refusal(parse(big)))).toMatch(/far larger than a handover batch[\s\S]*20005 rows/);
+  });
+
   it("works out the previous batch number for the missed-file warning", () => {
     expect(previousBatchNo("OGSERC/EXP/2026/0007")).toBe("OGSERC/EXP/2026/0006");
     expect(previousBatchNo("OGSERC/EXP/2026/0010")).toBe("OGSERC/EXP/2026/0009");

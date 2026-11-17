@@ -141,6 +141,47 @@ Phase 2 (Masters) has been built; see the Phase 2 section above. Phase 3 (Billin
 - 4: FX policy (fixed setting for now).
 - 5: whether one Finance Officer may confirm a receipt another recorded.
 
+## Phase 6, part 1: hardening (branch `feature/adjustments`, in progress)
+
+Started 17 Nov 2026. Going live (new Vercel project, Neon `main` as production, the first real Admin, merging to `main`) waits for Finance's details and the owner's go-ahead.
+
+### What was built
+- **Sign-in lockout** (BUILD_SPEC 7.2):
+  - 5 failed sign-ins within 15 minutes lock the account for 15 minutes from the last one.
+  - Counted from `sign_in_attempts` since the last successful sign-in or password change, so an Admin password reset unlocks the account.
+  - Tries while locked are refused without checking the password, and don't extend the lock (new `blocked` column, migration 0006).
+  - The lock is keyed on the email typed, so it never reveals which emails are real accounts.
+  - The sign-in form says the account is locked and until when. The locking failure is audited ("Sign-in locked"). Users shows a Locked pill.
+- **CI** (`.github/workflows/ci.yml`): lint, typecheck, tests and a production build on every push and pull request. It uses Node 22 and the pinned pnpm, and needs no secrets (tests use PGlite; the build uses placeholder settings).
+- **Nightly backup** (`.github/workflows/backup.yml`):
+  - Runs at 01:00 Lagos and on demand.
+  - `pg_dump` (PostgreSQL 18 client from the PGDG repository, to match Neon), custom format, AES-256 `gpg` encryption, kept as an artifact for 90 days.
+  - Skips with a notice until `BACKUP_DATABASE_URL` and `BACKUP_PASSPHRASE` are set.
+- **Guide page** (`/guide`): the workbook's Guide rewritten for the app. It covers the workflow (including R&E payments), the built-in controls, good practice and fees and budget, plus a "Your role" card saying what the reader can do.
+- **README**: stack, local setup, commands, environments, hosting and region, Neon free-plan limits (checked 17 Nov 2026), CI, the backup, and step-by-step restore.
+- **`docs/hosting-decision.md`**: a form for Vercel's answer on the Hobby plan (with a suggested post) and for the data-protection questions to Legal.
+- **`vercel.json`**: functions pinned to `lhr1` (London), next to Neon eu-west-2 (BUILD_SPEC 7.1). Other hosts ignore the file.
+- **R&E import:** sheets over 20,000 rows or 100 columns are refused before their cells are read, on top of the 900 KB upload cap.
+
+### Checks run
+- `pnpm lint`, `pnpm typecheck`, `pnpm test` (183 tests) and `pnpm build` pass. Migration 0006 is applied to Neon `dev`.
+- Lockout in the browser, on an email with no account: tries 1–4 say "don't match", try 5 says locked until 15 minutes later, and try 6 is refused unchecked. The audit entry and the attempt rows are as expected.
+- The CI build was rehearsed without `.env.local`, using only the placeholder settings. This caught two type errors in a new test, now fixed.
+- Backup: the encryption and decryption round trip was rehearsed (a passphrase with spaces and symbols works; a wrong one is refused). `pg_dump` itself can't be rehearsed on this PC (its PostgreSQL 16 tools can't dump Postgres 18). **Test with "Run workflow" once the production secrets are set.**
+
+### Decisions
+| Decision | Why |
+|---|---|
+| The lock lasts 15 minutes from the 5th failure; tries while locked don't count | BUILD_SPEC 7.2. Not counting them means a lock can't be stretched forever by repeated tries. |
+| Lock by email typed, not by account | The same message for real and unknown emails, so the lock can't be used to find accounts. |
+| CI also runs the production build | It proves `next build` works with nothing Vercel-specific (CLAUDE.md rule 8). |
+| The backup uses the direct (non-pooled) Neon connection | `pg_dump` needs a session connection. Neon's pooler runs in transaction mode. |
+
+### Still open (needs people, not code)
+- Post to Vercel's community forum and record the answer in `docs/hosting-decision.md`.
+- Ask OGSERC management or Legal about the Nigeria Data Protection Act 2023 and record the answer.
+- Browser check of `/guide` (needs a QA account).
+
 ## R&E payment handover import (branch `feature/adjustments`, awaiting review)
 
 Built 17 Nov 2026 from `REVENUE-REGISTRY-CONTRACT.md` (format version 1), the contract agreed with the Registration & Evaluation (R&E) app, and R&E's sample batches. The two apps share nothing but the batch file (BUILD_SPEC 12 still holds).

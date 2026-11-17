@@ -1,0 +1,83 @@
+# Nightly off-platform backup of the production database (BUILD_SPEC 7.1).
+# 01:00 Africa/Lagos = 00:00 UTC (Lagos has no daylight saving). Also runs on demand from the
+# Actions tab ("Run workflow"), e.g. to test it or before a risky change.
+#
+# Repository secrets (Settings > Secrets and variables > Actions):
+#   BACKUP_DATABASE_URL  Neon production connection string, the direct one (host without "-pooler").
+#   BACKUP_PASSPHRASE    Long random passphrase. Keep a copy off GitHub (e.g. OGSERC's password
+#                        manager): without it the backups can't be opened.
+#
+# Output: a workflow artifact "ogserc-revenue-YYYY-MM-DD" holding one encrypted file, kept 90 days.
+# The repository must stay private. How to restore: see README, "Restoring a backup".
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check the secrets are set
+        id: secrets
+        env:
+          DB: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DB" ] || [ -z "$PASS" ]; then
+            echo "::notice::Backup skipped: set BACKUP_DATABASE_URL and BACKUP_PASSPHRASE once production exists."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # pg_dump must be at least the server's major version (Neon runs Postgres 18).
+      - name: Install the PostgreSQL 18 client
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+          /usr/lib/postgresql/18/bin/pg_dump --version
+
+      - name: Dump, compress and encrypt
+        if: steps.secrets.outputs.ready == 'true'
+        id: dump
+        env:
+          DB: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          stamp=$(TZ=Africa/Lagos date +%F)
+          out="ogserc-revenue-${stamp}.dump.gpg"
+          # Custom format (-Fc) is compressed and restores table by table with pg_restore.
+          /usr/lib/postgresql/18/bin/pg_dump --format=custom --no-owner --no-privileges "$DB" \
+            | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 \
+                  --output "$out" 3<<<"$PASS"
+          size=$(stat -c %s "$out")
+          if [ "$size" -lt 1024 ]; then echo "::error::The backup is only ${size} bytes; something went wrong."; exit 1; fi
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+          echo "stamp=$stamp" >> "$GITHUB_OUTPUT"
+          echo "Backup ${out}: ${size} bytes" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep for 90 days
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ogserc-revenue-${{ steps.dump.outputs.stamp }}
+          path: ${{ steps.dump.outputs.file }}
+          retention-days: 90
+          if-no-files-found: error
+          compression-level: 0
