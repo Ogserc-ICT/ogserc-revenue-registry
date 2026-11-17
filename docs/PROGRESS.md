@@ -176,10 +176,10 @@ Started 17 Nov 2026. Going live (new Vercel project, Neon `main` as production, 
 | The lock lasts 15 minutes from the 5th failure; tries while locked don't count | BUILD_SPEC 7.2. Not counting them means a lock can't be stretched forever by repeated tries. |
 | Lock by email typed, not by account | The same message for real and unknown emails, so the lock can't be used to find accounts. |
 | CI also runs the production build | It proves `next build` works with nothing Vercel-specific (CLAUDE.md rule 8). |
+| Hosting: Vercel **Pro**, the Commission's team owned by ictogserc@gmail.com (confirmed 17 Nov 2026) | BUILD_SPEC 7.1 assumed Hobby; on Pro the pause risk and the forum post don't apply. The production project goes into this team. |
 | The backup uses the direct (non-pooled) Neon connection | `pg_dump` needs a session connection. Neon's pooler runs in transaction mode. |
 
 ### Still open (needs people, not code)
-- Confirm the Commission's Vercel team is on Pro, and who owns it (the owner reports Pro; the forum post is no longer needed). Record it in `docs/hosting-decision.md`.
 - Ask OGSERC management or Legal about the Nigeria Data Protection Act 2023 and record the answer.
 - Browser check of `/guide` (needs a QA account).
 

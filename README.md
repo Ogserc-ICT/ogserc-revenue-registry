@@ -73,7 +73,7 @@ Each environment has its own `AUTH_SECRET`. Preview's `AUTH_URL` is the branch's
 
 - **Neon:** project `ogserc-revenue-register`, owned by the OGSERC mailbox, in **AWS eu-west-2 (London)**. The database is `ogserc_revenue`, on Postgres 18.
 - **Vercel:** functions are pinned to **`lhr1` (London)** in `vercel.json`, next to the database.
-- **Plan:** Vercel **Pro**, the Commission's team (to be confirmed, see `docs/hosting-decision.md`). The data lives on Neon, outside Vercel, and the app uses no Vercel-only features, so it can move host without code changes.
+- **Plan:** Vercel **Pro**, in the Commission's team owned by ictogserc@gmail.com (see `docs/hosting-decision.md`). The data lives on Neon, outside Vercel, and the app uses no Vercel-only features, so it can move host without code changes.
 
 ### Neon free plan limits
 

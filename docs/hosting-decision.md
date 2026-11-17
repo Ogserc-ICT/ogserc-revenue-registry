@@ -4,16 +4,16 @@ BUILD_SPEC §7.1 and §7.2. Fill this in before go-live. Each section needs an a
 
 ## 1. Vercel plan
 
-**Status: Pro, to confirm (17 Nov 2026).** The owner reports that the Commission uses Vercel **Pro**. Pro allows organisational and commercial use, so the Hobby question in BUILD_SPEC §7.1 (and the community-forum post) no longer applies.
+**Status: settled (17 Nov 2026).** The Commission's Vercel team is on **Pro**, owned by ictogserc@gmail.com. Pro allows organisational and commercial use, so the Hobby question in BUILD_SPEC §7.1 (and the community-forum post) no longer applies.
 
-To confirm before go-live:
+Confirmed:
 
 | | |
 |---|---|
 | Vercel team on Pro (name) | |
-| Checked in Settings › Billing (who, when) | |
-| Team owner, and whether ictogserc@gmail.com is a member | |
-| Team the production project will live in | |
+| Checked in Settings › Billing (who, when) | Project owner, 17 Nov 2026 |
+| Team owner, and whether ictogserc@gmail.com is a member | Owned by ictogserc@gmail.com |
+| Team the production project will live in | This Pro team (owned by ictogserc@gmail.com) |
 
 Nothing in the code depends on the plan. The app still uses no Vercel-only features (CLAUDE.md rule 8), so it can move to another host unchanged.
 
@@ -39,5 +39,5 @@ The app holds licensees' names, addresses, contact details and payment records. 
 | Item | Value |
 |---|---|
 | Neon project | `ogserc-revenue-register`, owned by ictogserc@gmail.com, AWS eu-west-2 (London) |
-| Vercel project | To move into the Commission's Pro team in Phase 6. Functions pinned to `lhr1` (London) |
+| Vercel project | To be created in the Commission's Pro team (owner ictogserc@gmail.com) in Phase 6. Functions pinned to `lhr1` (London) |
 | Backups | GitHub Actions artifacts, encrypted, 90 days (README, "Nightly backup") |
