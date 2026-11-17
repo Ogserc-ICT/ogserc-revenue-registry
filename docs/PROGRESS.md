@@ -185,6 +185,10 @@ Built 17 Nov 2026 from `REVENUE-REGISTRY-CONTRACT.md` (format version 1), the co
 | A number in a date column is refused like an Excel date | The contract wants dates as text. A date cell without date formatting reads back as a bare number (e.g. 46342). |
 | The batch number is parsed only for the "previous batch missing" warning | The contract recommends the warning but otherwise treats identifiers as opaque. |
 
+### Next.js security upgrade (17 Nov 2026)
+- Next.js and `eslint-config-next` 16.4.4 → **16.4.5**, which fixes GHSA "Information disclosure across root params" (moderate; affected 16.3.0–16.4.4). Lint, typecheck, 173 tests and the build pass after a clean reinstall.
+- `pnpm audit --prod` still lists `uuid` 8.3.2 under `exceljs` (GHSA-w5hq-g745-h8pq, moderate). It's left as is: the flaw is in uuid's v3/v5/v6 with a caller-supplied buffer, and exceljs only calls `v4()` without one. `exceljs` 4.4.0 is the latest release. Revisit if exceljs updates.
+
 ### For R&E (contract Q30)
 RR can do everything in §4 and §5, except keeping the file in Vercel Blob; it's kept in RR's Postgres instead. RR doesn't want the direct feed (§8) yet.
 
