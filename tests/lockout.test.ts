@@ -38,7 +38,7 @@ describe("lockout in the database", () => {
   afterAll(async () => {
     await client.close();
   });
-  const fail = (email: string, n: number) => Promise.all(Array.from({ length: n }, () => recordSignInFailure(db, email, "10.0.0.1"))).then((r) => r.at(-1));
+  const fail = (email: string, n: number) => Promise.all(Array.from({ length: n }, () => recordSignInFailure(db, email, "10.0.0.1"))).then((r) => r.at(-1) ?? null);
 
   it("locks on the fifth wrong password and audits it once, in the same transaction", async () => {
     expect(isLocked(await fail("ada@ogsrr.test", 4))).toBe(false);
