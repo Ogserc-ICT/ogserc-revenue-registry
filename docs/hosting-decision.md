@@ -4,22 +4,18 @@ BUILD_SPEC §7.1 and §7.2. Fill this in before go-live. Each section needs an a
 
 ## 1. Vercel plan
 
-**Status: not yet asked.**
+**Status: Pro, to confirm (17 Nov 2026).** The owner reports that the Commission uses Vercel **Pro**. Pro allows organisational and commercial use, so the Hobby question in BUILD_SPEC §7.1 (and the community-forum post) no longer applies.
 
-The app runs on the Vercel **Hobby** plan. Hobby is meant for non-commercial use, and Vercel can pause a project it judges commercial. We should ask Vercel whether this use is acceptable, and keep their answer here.
-
-Suggested post for community.vercel.com:
-
-> We are the Ogun State Electricity Regulatory Commission (OGSERC), a state government regulator in Nigeria. An employee has built an internal, staff-only web app on the Hobby plan. It records the regulator's own revenue receipts and billing. There are no public users, no payments are taken through the app, and it doesn't generate revenue for anyone. About ten staff use it. Is the Hobby plan acceptable for this, or do we need Pro?
+To confirm before go-live:
 
 | | |
 |---|---|
-| Posted on | |
-| Link | |
-| Vercel's answer | |
-| Decision (Hobby / Pro) | |
+| Vercel team on Pro (name) | |
+| Checked in Settings › Billing (who, when) | |
+| Team owner, and whether ictogserc@gmail.com is a member | |
+| Team the production project will live in | |
 
-If Vercel says Pro is required, change the plan. No code changes are needed.
+Nothing in the code depends on the plan. The app still uses no Vercel-only features (CLAUDE.md rule 8), so it can move to another host unchanged.
 
 ## 2. Data protection (Nigeria Data Protection Act 2023)
 
@@ -43,5 +39,5 @@ The app holds licensees' names, addresses, contact details and payment records. 
 | Item | Value |
 |---|---|
 | Neon project | `ogserc-revenue-register`, owned by ictogserc@gmail.com, AWS eu-west-2 (London) |
-| Vercel project | To move to ictogserc@gmail.com in Phase 6. Functions pinned to `lhr1` (London) |
+| Vercel project | To move into the Commission's Pro team in Phase 6. Functions pinned to `lhr1` (London) |
 | Backups | GitHub Actions artifacts, encrypted, 90 days (README, "Nightly backup") |

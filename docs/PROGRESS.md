@@ -179,7 +179,7 @@ Started 17 Nov 2026. Going live (new Vercel project, Neon `main` as production, 
 | The backup uses the direct (non-pooled) Neon connection | `pg_dump` needs a session connection. Neon's pooler runs in transaction mode. |
 
 ### Still open (needs people, not code)
-- Post to Vercel's community forum and record the answer in `docs/hosting-decision.md`.
+- Confirm the Commission's Vercel team is on Pro, and who owns it (the owner reports Pro; the forum post is no longer needed). Record it in `docs/hosting-decision.md`.
 - Ask OGSERC management or Legal about the Nigeria Data Protection Act 2023 and record the answer.
 - Browser check of `/guide` (needs a QA account).
 
