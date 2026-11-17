@@ -18,6 +18,7 @@ export type NavIcon =
   | "revenueBudget"
   | "settings"
   | "receiver"
+  | "handover"
   | "users"
   | "data"
   | "guide";
@@ -44,6 +45,7 @@ export const NAV: NavGroup[] = [
     items: [
       { href: "/new-receipt", label: "New receipt", icon: "receipt", capability: "receipts.record" },
       { href: "/register", label: "Register", icon: "register", capability: "receipts.view" },
+      { href: "/re-payments", label: "R&E payments", icon: "handover", capability: "handover.view" },
       { href: "/new-demand-notice", label: "New demand notice", icon: "notice", capability: "dn.issue" },
       { href: "/demand-notices", label: "Demand notices", icon: "notices", capability: "dn.view" },
       { href: "/payers", label: "Payers", icon: "payers", capability: "payers.view" },

@@ -3,6 +3,7 @@ import {
   bigserial,
   boolean,
   check,
+  customType,
   date,
   index,
   integer,
@@ -400,6 +401,80 @@ export const revenueBudget = pgTable(
   (t) => [
     uniqueIndex("revenue_budget_uq").on(t.financialYear, t.budgetLineId, t.month),
     check("revenue_budget_month", sql`${t.month} BETWEEN 1 AND 12`),
+  ],
+);
+
+// ---------- R&E payment handover (REVENUE-REGISTRY-CONTRACT.md, format version 1) ----------
+// Confirmed payments handed over by the Registration & Evaluation app in batches. Stored exactly
+// as received; both tables are append-only (UPDATE and DELETE blocked by trigger). Kept apart from
+// receipts: not counted in revenue reports until Finance assigns revenue codes (owner, Nov 2026).
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
+
+export const handoverLineTypeEnum = pgEnum("handover_line_type", ["Payment", "Reversal"]);
+
+export const handoverBatches = pgTable("handover_batches", {
+  batchNo: text("batch_no").primaryKey(),
+  checksum: text("checksum").notNull(),
+  formatVersion: integer("format_version").notNull(),
+  preparedAt: text("prepared_at"),
+  preparedBy: text("prepared_by"),
+  confirmedFrom: date("confirmed_from", { mode: "string" }),
+  confirmedTo: date("confirmed_to", { mode: "string" }),
+  paymentLines: integer("payment_lines").notNull(),
+  reversalLines: integer("reversal_lines").notNull(),
+  paymentTotal: money("payment_total").notNull(),
+  reversalTotal: money("reversal_total").notNull(),
+  netTotal: money("net_total").notNull(),
+  linesAdded: integer("lines_added").notNull(),
+  linesSkipped: integer("lines_skipped").notNull(),
+  fileName: text("file_name").notNull(),
+  // The uploaded workbook, kept with the batch (a few KB). Plain Postgres, no Vercel storage.
+  fileBytes: bytea("file_bytes").notNull(),
+  importedAt: tstz("imported_at").notNull().defaultNow(),
+  importedById: uuid("imported_by_id").references(() => users.id),
+  importedBy: text("imported_by").notNull(),
+});
+
+export const handoverLines = pgTable(
+  "handover_lines",
+  {
+    lineId: text("line_id").primaryKey(),
+    lineType: handoverLineTypeEnum("line_type").notNull(),
+    payNo: text("pay_no").notNull(),
+    batchNo: text("batch_no")
+      .notNull()
+      .references(() => handoverBatches.batchNo),
+    dateReceived: date("date_received", { mode: "string" }).notNull(),
+    dateConfirmed: date("date_confirmed", { mode: "string" }).notNull(),
+    /** Naira, exactly Amount (kobo) / 100. Negative on a reversal. */
+    amount: money("amount").notNull(),
+    purpose: text("purpose"),
+    revenueCode: text("revenue_code"),
+    channel: text("channel"),
+    rrr: text("rrr"),
+    payer: text("payer").notNull(),
+    paidFor: text("paid_for"),
+    filingType: text("filing_type"),
+    ackNo: text("ack_no"),
+    registrationNo: text("registration_no"),
+    category: text("category"),
+    lga: text("lga"),
+    recordedBy: text("recorded_by"),
+    confirmedBy: text("confirmed_by"),
+    verifiedWithBank: text("verified_with_bank"),
+    reversedOn: date("reversed_on", { mode: "string" }),
+    reversedBy: text("reversed_by"),
+    reversalReason: text("reversal_reason"),
+    importedAt: tstz("imported_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("handover_lines_pay_no_idx").on(t.payNo),
+    index("handover_lines_batch_idx").on(t.batchNo),
+    check(
+      "handover_lines_sign",
+      sql`(${t.lineType} = 'Payment' AND ${t.amount} > 0) OR (${t.lineType} = 'Reversal' AND ${t.amount} < 0)`,
+    ),
   ],
 );
 

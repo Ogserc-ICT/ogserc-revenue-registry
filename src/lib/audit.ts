@@ -34,6 +34,7 @@ export const AUDIT_ACTIONS = {
   budgetChanged: "Budget changed",
   statementTotalEntered: "Bank statement total entered",
   exported: "Export",
+  handoverImported: "R&E handover imported",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

@@ -29,6 +29,9 @@ export const CAPABILITIES = {
   "fees.edit": ["admin"],
   "budget.edit": ["admin"],
   "data.manage": ["admin"],
+  // R&E payment handover (REVENUE-REGISTRY-CONTRACT.md). Finance prepares batches in R&E and imports them here.
+  "handover.view": ["admin", "revenue_officer", "finance_officer", "viewer"],
+  "handover.import": ["admin", "finance_officer"],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Capability = keyof typeof CAPABILITIES;
