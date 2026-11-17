@@ -6,6 +6,8 @@ import { PageHeader, StatusPill } from "@/components/ui/misc";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { formatDateTime } from "@/lib/dates";
+import { isLocked } from "@/lib/lockout";
+import { signInLockedUntil } from "@/lib/lockout-server";
 import { ROLE_LABELS, ROLES } from "@/lib/roles";
 import { gatePage } from "@/lib/session";
 import { CreateUserButton, UserRowActions } from "./user-dialogs";
@@ -20,6 +22,8 @@ interface Row {
   active: boolean;
   mustChangePassword: boolean;
   lastLoginAt: Date | null;
+  /** Set while too many failed sign-ins keep the account locked (BUILD_SPEC 7.2). */
+  lockedUntil: Date | null;
 }
 
 export default async function UsersPage() {
@@ -27,7 +31,7 @@ export default async function UsersPage() {
   if (!gate.ok) return <NoAccess title="Users" />;
   const me = gate.user.id;
 
-  const rows: Row[] = await db
+  const list = await db
     .select({
       id: users.id,
       name: users.name,
@@ -39,6 +43,13 @@ export default async function UsersPage() {
     })
     .from(users)
     .orderBy(desc(users.active), asc(users.name));
+  // A handful of staff accounts, so one small query each is fine.
+  const rows: Row[] = await Promise.all(
+    list.map(async (u) => {
+      const until = u.active ? await signInLockedUntil(db, u.email) : null;
+      return { ...u, lockedUntil: isLocked(until) ? until : null };
+    }),
+  );
 
   const columns: Column<Row>[] = [
     {
@@ -76,6 +87,11 @@ export default async function UsersPage() {
       cell: (r) =>
         !r.active ? (
           <StatusPill tone="slate">Deactivated</StatusPill>
+        ) : r.lockedUntil ? (
+          <div>
+            <StatusPill tone="rose">Locked</StatusPill>
+            <p className="mt-1 text-xs text-muted">Until {formatDateTime(r.lockedUntil)}. Reset the password to unlock now.</p>
+          </div>
         ) : r.mustChangePassword ? (
           <StatusPill tone="amber">Temporary password</StatusPill>
         ) : (

@@ -1,0 +1,1 @@
+ALTER TABLE "sign_in_attempts" ADD COLUMN "blocked" boolean DEFAULT false NOT NULL;

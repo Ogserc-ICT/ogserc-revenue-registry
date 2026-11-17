@@ -43,6 +43,13 @@
       "when": 1794904104941,
       "tag": "0005_handover",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794911677234,
+      "tag": "0006_sign_in_lockout",
+      "breakpoints": true
     }
   ]
 }

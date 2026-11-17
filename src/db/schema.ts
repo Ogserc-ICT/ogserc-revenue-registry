@@ -84,6 +84,8 @@ export const signInAttempts = pgTable(
     email: text("email").notNull(),
     ip: text("ip"),
     succeeded: boolean("succeeded").notNull(),
+    /** Tried while the account was locked: refused unchecked, and not counted towards a new lock. */
+    blocked: boolean("blocked").notNull().default(false),
     at: tstz("at").notNull().defaultNow(),
   },
   (t) => [index("sign_in_attempts_email_at_idx").on(sql`lower(${t.email})`, t.at)],

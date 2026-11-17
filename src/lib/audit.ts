@@ -7,6 +7,7 @@ export const AUDIT_ACTIONS = {
   signIn: "User signed in",
   signOut: "User signed out",
   passwordChanged: "Password changed",
+  signInLocked: "Sign-in locked",
   userCreated: "User created",
   userRolesChanged: "User roles changed",
   userDeactivated: "User deactivated",

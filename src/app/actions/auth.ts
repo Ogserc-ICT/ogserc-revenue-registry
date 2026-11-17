@@ -9,6 +9,9 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
 import { AUDIT_ACTIONS, writeAudit } from "@/lib/audit";
+import { formatDateTime } from "@/lib/dates";
+import { isLocked, LOCK_AFTER_FAILURES, LOCK_MINUTES } from "@/lib/lockout";
+import { signInLockedUntil } from "@/lib/lockout-server";
 import { getCurrentUser } from "@/lib/session";
 import { changePasswordSchema, fieldErrors, signInSchema } from "@/lib/validation";
 
@@ -49,15 +52,31 @@ export async function signInAction(_prev: ActionResult | null, formData: FormDat
   const redirectTo = account?.mustChangePassword
     ? "/change-password"
     : safeCallback(formData.get("callbackUrl"), await appOrigin());
+  const locked = () =>
+    signInLockedUntil(db, parsed.data.email).then((until) =>
+      isLocked(until)
+        ? {
+            ok: false as const,
+            error:
+              `Too many failed sign-ins: this account is locked for ${LOCK_MINUTES} minutes after ${LOCK_AFTER_FAILURES} wrong passwords. ` +
+              `Try again after ${formatDateTime(until)}, or ask an Admin to reset your password.`,
+          }
+        : null,
+    );
+  const before = await locked();
+  if (before) return before;
   try {
     await signIn("credentials", { ...parsed.data, redirectTo });
     return { ok: true };
   } catch (err) {
     if (err instanceof AuthError) {
-      return {
-        ok: false,
-        error: "That email and password don't match an active account. Check both and try again.",
-      };
+      // This try may have been the one that locked the account: say so rather than "wrong password".
+      return (
+        (await locked()) ?? {
+          ok: false,
+          error: "That email and password don't match an active account. Check both and try again.",
+        }
+      );
     }
     throw err; // includes Next's redirect after a successful sign-in
   }

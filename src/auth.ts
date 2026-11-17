@@ -7,6 +7,8 @@ import { authConfig } from "./auth.config";
 import { db } from "./db";
 import { signInAttempts, users } from "./db/schema";
 import { AUDIT_ACTIONS, writeAudit } from "./lib/audit";
+import { isLocked } from "./lib/lockout";
+import { recordBlockedSignIn, recordSignInFailure, signInLockedUntil } from "./lib/lockout-server";
 import { signInSchema } from "./lib/validation";
 
 // Compared against when the email is unknown, so a miss takes as long as a wrong password.
@@ -35,6 +37,12 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         const { email, password } = parsed.data;
         const ip = clientIp(request);
 
+        // Locked (BUILD_SPEC 7.2): refuse without checking the password, and don't count the try.
+        if (isLocked(await signInLockedUntil(db, email))) {
+          await recordBlockedSignIn(db, email, ip);
+          return null;
+        }
+
         const [user] = await db
           .select()
           .from(users)
@@ -43,7 +51,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
 
         if (!user || !ok || !user.active) {
-          await db.insert(signInAttempts).values({ email, ip, succeeded: false });
+          await recordSignInFailure(db, email, ip);
           return null;
         }
 
