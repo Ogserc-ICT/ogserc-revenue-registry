@@ -166,6 +166,7 @@ Started 17 Nov 2026. Going live (new Vercel project, Neon `main` as production, 
 ### Checks run
 - `pnpm lint`, `pnpm typecheck`, `pnpm test` (183 tests) and `pnpm build` pass. Migration 0006 is applied to Neon `dev`.
 - Lockout in the browser, on an email with no account: tries 1–4 say "don't match", try 5 says locked until 15 minutes later, and try 6 is refused unchecked. The audit entry and the attempt rows are as expected.
+- CI's first run on GitHub (push of 1edcb82, 17 Nov 2026) passed: lint, typecheck, tests and build.
 - The CI build was rehearsed without `.env.local`, using only the placeholder settings. This caught two type errors in a new test, now fixed.
 - Backup: the encryption and decryption round trip was rehearsed (a passphrase with spaces and symbols works; a wrong one is refused). `pg_dump` itself can't be rehearsed on this PC (its PostgreSQL 16 tools can't dump Postgres 18). **Test with "Run workflow" once the production secrets are set.**
 
